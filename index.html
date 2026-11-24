@@ -1,0 +1,3038 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة الموارد البشرية وشؤون العاملين السحابي - OSS Middle East Certification</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Cairo Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js for Dashboards & Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- SheetJS for Excel Import/Export (.xlsx / .csv) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        oss: {
+                            maroon: '#822429',
+                            maroonHover: '#6a1d21',
+                            navy: '#212561',
+                            navyHover: '#181b47',
+                            gold: '#C59B27',
+                            goldHover: '#a37e1e',
+                            lightBg: '#f8fafc'
+                        }
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #f1f5f9; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; }
+        ::-webkit-scrollbar-thumb { background: #822429; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6a1d21; }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #printable-area, #printable-area * { visibility: visible; }
+            #printable-area { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; background: white; color: black; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="fixed top-5 left-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- HEADER NAVBAR -->
+        <header id="main-header" class="bg-oss-navy text-white shadow-xl sticky top-0 z-40 hidden border-b-4 border-oss-gold">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-20">
+                    <!-- Brand & Logo -->
+                    <div class="flex items-center space-x-3 space-x-reverse">
+                        <div id="brand-logo-container" class="w-12 h-12 rounded-xl bg-white p-1 flex items-center justify-center shadow-md border border-oss-gold cursor-pointer" onclick="switchTab(currentUser.role === 'admin' ? 'admin_dashboard' : (currentUser.role === 'manager' ? 'branch_hub' : 'my_profile'))">
+                            <svg id="svg-logo" viewBox="0 0 100 100" class="w-full h-full">
+                                <rect x="2" y="2" width="96" height="96" fill="#822429" stroke="#212561" stroke-width="4" rx="4"/>
+                                <rect x="6" y="6" width="88" height="88" fill="none" stroke="#ffffff" stroke-width="1.5" rx="2"/>
+                                <rect x="6" y="6" width="88" height="22" fill="#212561"/>
+                                <text x="50" y="62" font-family="'Times New Roman', serif" font-weight="bold" font-size="34" fill="#ffffff" text-anchor="middle">oSs</text>
+                                <text x="50" y="80" font-family="'Times New Roman', serif" font-weight="bold" font-size="11" fill="#ffffff" text-anchor="middle">Middle East</text>
+                                <text x="50" y="90" font-family="'Times New Roman', serif" font-style="italic" font-size="7" fill="#C59B27" text-anchor="middle">Certification</text>
+                            </svg>
+                            <img id="custom-logo-img" class="w-full h-full object-contain hidden" alt="OSS Logo">
+                        </div>
+                        <div>
+                            <h1 id="header-company-title" class="font-black text-lg leading-tight tracking-wide text-white">OSS Middle East Certification</h1>
+                            <p id="header-subtitle" class="text-xs text-oss-gold font-semibold">منظومة الموارد البشرية والرواتب الموحدة (HRIS Enterprise)</p>
+                        </div>
+                    </div>
+
+                    <!-- Status Pill & Actions -->
+                    <div class="flex items-center space-x-3 space-x-reverse">
+                        <!-- Cloud Sync Status Pill -->
+                        <div id="cloud-status-pill" onclick="openFirebaseConfigModal()" class="cursor-pointer bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-2xl flex items-center gap-2 text-xs font-bold transition hover:border-oss-gold">
+                            <span id="cloud-status-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                            <span id="cloud-status-text" class="text-slate-300">جاري الاتصال بالسحاب...</span>
+                        </div>
+
+                        <div class="hidden lg:flex items-center space-x-2 space-x-reverse border-l border-slate-700 pl-4">
+                            <button onclick="startLiveProductionMode()" title="تصفير بيانات التجربة للبدء الفعلي" class="text-xs bg-emerald-800 hover:bg-emerald-700 text-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-500 transition flex items-center gap-1.5 font-extrabold shadow">
+                                <i class="fas fa-play text-emerald-300"></i> بدء إنتاجي
+                            </button>
+                            <button onclick="exportJSONBackup()" title="تصدير نسخة احتياطية شاملة" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl border border-slate-600 transition flex items-center gap-1.5 font-bold">
+                                <i class="fas fa-database text-oss-gold"></i> احتياطي JSON
+                            </button>
+                            <button onclick="triggerImportBackup()" title="استعادة نسخة احتياطية" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl border border-slate-600 transition flex items-center gap-1.5 font-bold">
+                                <i class="fas fa-file-import text-blue-400"></i> استعادة
+                            </button>
+                            <input type="file" id="backup-file-input" class="hidden" accept=".json" onchange="importJSONBackup(event)">
+                        </div>
+
+                        <!-- Logged User Info -->
+                        <div class="flex items-center space-x-3 space-x-reverse bg-slate-900 px-3 py-1.5 rounded-2xl border border-oss-gold/40">
+                            <div id="user-avatar-box" class="w-9 h-9 rounded-xl bg-oss-maroon text-white font-black text-sm flex items-center justify-center border-2 border-oss-gold overflow-hidden">
+                                <span id="user-avatar-char">م</span>
+                                <img id="user-avatar-img" class="w-full h-full object-cover hidden" alt="User Avatar">
+                            </div>
+                            <div class="text-right">
+                                <div id="user-display-name" class="text-xs font-black text-white">اسم المستخدم</div>
+                                <div id="user-role-badge" class="text-[10px] text-oss-gold font-bold">الصفة</div>
+                            </div>
+                        </div>
+
+                        <!-- Logout Button -->
+                        <button onclick="logout()" class="text-slate-300 hover:text-rose-400 p-2 rounded-xl hover:bg-slate-800 transition" title="تسجيل الخروج">
+                            <i class="fas fa-power-off text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic System Nav Tabs -->
+            <div class="bg-oss-maroon px-4 border-t border-oss-gold/30">
+                <div class="max-w-7xl mx-auto flex space-x-2 space-x-reverse overflow-x-auto py-2" id="nav-tabs-container"></div>
+            </div>
+        </header>
+
+        <!-- LOGIN SCREEN -->
+        <main id="login-view" class="flex-grow flex items-center justify-center p-4 bg-gradient-to-br from-oss-navy via-slate-900 to-oss-maroon relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#C59B27_1px,transparent_1px)] [background-size:16px_16px]"></div>
+            
+            <div class="w-full max-w-lg bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border border-oss-gold/40 z-10">
+                <div class="bg-gradient-to-r from-oss-navy to-oss-maroon text-white p-8 text-center relative border-b-4 border-oss-gold">
+                    <div class="w-24 h-24 mx-auto mb-3 bg-white p-2 rounded-2xl shadow-xl border-2 border-oss-gold flex items-center justify-center">
+                        <svg viewBox="0 0 100 100" class="w-full h-full">
+                            <rect x="2" y="2" width="96" height="96" fill="#822429" stroke="#212561" stroke-width="4" rx="4"/>
+                            <rect x="6" y="6" width="88" height="88" fill="none" stroke="#ffffff" stroke-width="1.5" rx="2"/>
+                            <rect x="6" y="6" width="88" height="22" fill="#212561"/>
+                            <text x="50" y="62" font-family="'Times New Roman', serif" font-weight="bold" font-size="34" fill="#ffffff" text-anchor="middle">oSs</text>
+                            <text x="50" y="80" font-family="'Times New Roman', serif" font-weight="bold" font-size="11" fill="#ffffff" text-anchor="middle">Middle East</text>
+                            <text x="50" y="90" font-family="'Times New Roman', serif" font-style="italic" font-size="7" fill="#C59B27" text-anchor="middle">Certification</text>
+                        </svg>
+                    </div>
+                    <h2 id="login-company-title" class="text-2xl font-black text-white">OSS Middle East Certification</h2>
+                    <p id="login-company-sub" class="text-oss-gold text-xs font-bold mt-1">منظومة الموارد البشرية وشؤون العاملين والرواتب السحابية</p>
+                    <p class="text-slate-300 text-[11px] mt-1 font-semibold">فروع: القاهرة • الجيزة • الإسكندرية</p>
+                </div>
+
+                <div class="p-8 space-y-6">
+                    <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-extrabold text-slate-700 uppercase mb-1.5">اسم المستخدم (Username)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400">
+                                    <i class="fas fa-user-circle text-base"></i>
+                                </span>
+                                <input type="text" id="login-username" required placeholder="ادخل اسم المستخدم" class="w-full pr-11 pl-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-oss-maroon text-slate-800 font-bold outline-none transition text-sm text-right">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-extrabold text-slate-700 uppercase mb-1.5">كلمة المرور (Password)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400">
+                                    <i class="fas fa-lock text-base"></i>
+                                </span>
+                                <input type="password" id="login-password" required placeholder="••••••••" class="w-full pr-11 pl-10 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-oss-maroon text-slate-800 font-bold outline-none transition text-sm">
+                                <button type="button" onclick="togglePasswordVisibility('login-password')" class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 hover:text-slate-600">
+                                    <i class="fas fa-eye text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full py-3.5 bg-oss-maroon hover:bg-oss-maroonHover text-white font-extrabold rounded-xl shadow-lg shadow-oss-maroon/30 transition duration-200 flex items-center justify-center gap-2 text-sm">
+                            <span>تسجيل الدخول للنظام</span>
+                            <i class="fas fa-sign-in-alt"></i>
+                        </button>
+                    </form>
+
+                    <div class="text-center pt-2 border-t border-slate-100">
+                        <button onclick="openFirebaseConfigModal()" class="text-xs text-oss-navy hover:text-oss-maroon font-extrabold flex items-center justify-center gap-1.5 mx-auto">
+                            <i class="fas fa-cloud text-xs"></i>
+                            <span>إعدادات الاتصال السحابي (Firebase Setup)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- DASHBOARD & CONTENT CONTAINER -->
+        <main id="app-content" class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 hidden">
+            <!-- Rendered Dynamically via JS Router -->
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 no-print">
+            <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+                <div id="footer-copy-text">نظام الموارد البشرية وشؤون العاملين © 2026 <strong>OSS Middle East Certification</strong> - جميع الحقوق محفوظة.</div>
+                <div class="flex items-center gap-2">
+                    <span id="footer-db-status" class="inline-flex items-center gap-1.5 text-emerald-600 font-bold">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> التزامن السحابي الحي نشط
+                    </span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- MODAL BACKDROP -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div id="modal-content" class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 transition-all">
+            <!-- Dynamic Modal Content Injected Here -->
+        </div>
+    </div>
+
+    <!-- FIREBASE MODULE & REAL-TIME ENGINE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // APP ID & CONFIG ENVIRONMENT RESOLUTION
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'oss-hris-app';
+        let rawFirebaseConfig = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+        let firebaseConfig = null;
+
+        if (rawFirebaseConfig) {
+            try {
+                firebaseConfig = typeof rawFirebaseConfig === 'string' ? JSON.parse(rawFirebaseConfig) : rawFirebaseConfig;
+            } catch (e) {
+                console.warn("Invalid embedded Firebase Config:", e);
+            }
+        }
+
+        // Global State Holder
+        window.appState = {
+            employees: [],
+            attendanceLogs: [],
+            leaveRequests: [],
+            settings: null,
+            auditLogs: [],
+            announcements: [],
+            financialAdjustments: [],
+            loans: [],
+            leaveLedger: [],
+            isCloudActive: false
+        };
+
+        window.currentUser = null;
+        window.activeTab = 'admin_dashboard';
+        window.firebaseApp = null;
+        window.firebaseDb = null;
+        window.firebaseAuth = null;
+        window.dbUser = null;
+
+        // Constants
+        window.GOVERNORATES = ["القاهرة", "الجيزة", "الإسكندرية"];
+        window.DEPARTMENTS = [
+            { id: "DEP-REV", name: "إدارة المراجعة والاعتماد (Audit & Certification)" },
+            { id: "DEP-QUAL", name: "إدارة الجودة والاستشارات (Quality & Consulting)" },
+            { id: "DEP-SALES", name: "إدارة المبيعات والتسويق (Sales & BD)" },
+            { id: "DEP-HR", name: "إدارة الموارد البشرية والشؤون الإدارية (HR & Admin)" },
+            { id: "DEP-IT", name: "إدارة تقنية المعلومات والتحول الرقمي (IT & Digital)" }
+        ];
+
+        window.DEFAULT_SETTINGS = {
+            id: "SYSTEM_CONFIG",
+            companyName: "OSS Middle East Certification",
+            companySubtitle: "منظومة الموارد البشرية وشؤون العاملين والرواتب الموحدة",
+            logoBase64: "",
+            officialStartTime: "09:00",
+            lateThresholdTime: "09:15",
+            gracePeriodMinutes: 240,
+            lateRatePerHour: 60,
+            overtimeRateMultiplier: 1.5,
+            absentPenaltyDays: 1.5,
+            documentExpiryNoticeDays: 30,
+            signatureHR: "مدير الموارد البشرية وشؤون العاملين",
+            signatureFinance: "المدير المالي والحسابات",
+            signatureGM: "المدير العام والعضو المنتدب",
+            footerPrintText: "هذا المستند معتمد وصادر إلكترونياً من منصة الموارد البشرية والشؤون الإدارية لشركة OSS Middle East Certification.",
+            customTexts: {
+                welcomeMessage: "أهلاً بك في البوابة الإلكترونية الشاملة لشركة OSS Middle East Certification",
+                leaveTypesStr: "اعتيادي, عارضة, مرضي, مأمورية خارجية, إذن ساعتين",
+            }
+        };
+
+        window.INITIAL_EMPLOYEES = [
+            {
+                id: "ADM-001",
+                name: "مدير الموارد البشرية وشؤون العاملين",
+                photoBase64: "",
+                nationalId: "28501011200000",
+                nationalIdExpiry: "2030-01-01",
+                contractExpiry: "2030-01-01",
+                healthCertExpiry: "2030-01-01",
+                governorate: "القاهرة",
+                departmentId: "DEP-HR",
+                jobTitle: "Head of HR & Personnel Affairs Admin",
+                basicSalary: 35000,
+                allowances: 6000,
+                annualLeaveBalance: 30,
+                casualLeaveBalance: 7,
+                sickLeaveBalance: 30,
+                monthlyPermissionBalanceHours: 8,
+                username: "admin",
+                password: "123",
+                role: "admin",
+                status: "نشط",
+                managerId: "",
+                phone: "01000000000",
+                joinDate: "2018-01-01",
+                birthDate: "1982-01-01",
+                bankAccount: "EG00000400019920199200",
+                custodyItems: [],
+                careerTimeline: [],
+                warningsPenalties: [],
+                leaveLedger: []
+            },
+            {
+                id: "MGR-001",
+                name: "مدير فرع القاهرة الرئيسي",
+                photoBase64: "",
+                nationalId: "28809101200011",
+                nationalIdExpiry: "2029-01-01",
+                contractExpiry: "2030-01-01",
+                healthCertExpiry: "2029-01-01",
+                governorate: "القاهرة",
+                departmentId: "DEP-REV",
+                jobTitle: "مدير مراجعات الأيزو وفرع القاهرة",
+                basicSalary: 32000,
+                allowances: 5000,
+                annualLeaveBalance: 30,
+                casualLeaveBalance: 7,
+                sickLeaveBalance: 20,
+                monthlyPermissionBalanceHours: 6,
+                username: "mgr_cairo",
+                password: "123",
+                role: "manager",
+                status: "نشط",
+                managerId: "ADM-001",
+                phone: "01000000001",
+                joinDate: "2014-01-01",
+                birthDate: "1972-03-15",
+                bankAccount: "EG11000400019920199200",
+                custodyItems: [],
+                careerTimeline: [],
+                warningsPenalties: [],
+                leaveLedger: []
+            },
+            {
+                id: "MGR-002",
+                name: "مدير فرع الإسكندرية",
+                photoBase64: "",
+                nationalId: "28911051500022",
+                nationalIdExpiry: "2029-01-01",
+                contractExpiry: "2030-01-01",
+                healthCertExpiry: "2029-01-01",
+                governorate: "الإسكندرية",
+                departmentId: "DEP-SALES",
+                jobTitle: "مدير فرع الإسكندرية والمبيعات",
+                basicSalary: 28000,
+                allowances: 4000,
+                annualLeaveBalance: 25,
+                casualLeaveBalance: 7,
+                sickLeaveBalance: 15,
+                monthlyPermissionBalanceHours: 4,
+                username: "mgr_alex",
+                password: "123",
+                role: "manager",
+                status: "نشط",
+                managerId: "ADM-001",
+                phone: "01200000002",
+                joinDate: "2020-05-01",
+                birthDate: "1984-06-10",
+                bankAccount: "EG22000400019920199299",
+                custodyItems: [],
+                careerTimeline: [],
+                warningsPenalties: [],
+                leaveLedger: []
+            },
+            {
+                id: "MGR-003",
+                name: "مدير فرع الجيزة",
+                photoBase64: "",
+                nationalId: "29003151400033",
+                nationalIdExpiry: "2029-01-01",
+                contractExpiry: "2030-01-01",
+                healthCertExpiry: "2029-01-01",
+                governorate: "الجيزة",
+                departmentId: "DEP-QUAL",
+                jobTitle: "مدير فرع الجيزة والجودة الاستشارية",
+                basicSalary: 29000,
+                allowances: 4500,
+                annualLeaveBalance: 28,
+                casualLeaveBalance: 7,
+                sickLeaveBalance: 15,
+                monthlyPermissionBalanceHours: 4,
+                username: "mgr_giza",
+                password: "123",
+                role: "manager",
+                status: "نشط",
+                managerId: "ADM-001",
+                phone: "01100000003",
+                joinDate: "2021-02-15",
+                birthDate: "1986-09-18",
+                bankAccount: "EG33000400019920199333",
+                custodyItems: [],
+                careerTimeline: [],
+                warningsPenalties: [],
+                leaveLedger: []
+            }
+        ];
+
+        window.INITIAL_ANNOUNCEMENTS = [
+            {
+                id: "ANN-101",
+                title: "مرحباً بكم في منصة OSS Middle East السحابية",
+                content: "تم تفعيل التزامن السحابي الفوري لمنظومة الموارد البشرية وشؤون العاملين لجميع فروع القاهرة والجيزة والإسكندرية.",
+                author: "إدارة شؤون العاملين",
+                targetGovernorate: "الكل",
+                date: new Date().toISOString().slice(0,10)
+            }
+        ];
+
+        // INDEXEDDB FALLBACK ENGINE
+        class LocalIndexedDB {
+            constructor() {
+                this.dbName = "OSS_HRIS_LocalDB";
+                this.version = 1;
+                this.db = null;
+            }
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const req = indexedDB.open(this.dbName, this.version);
+                    req.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        const stores = ["employees", "attendanceLogs", "leaveRequests", "settings", "auditLogs", "announcements", "financialAdjustments", "loans"];
+                        stores.forEach(s => {
+                            if (!db.objectStoreNames.contains(s)) db.createObjectStore(s, { keyPath: "id" });
+                        });
+                    };
+                    req.onsuccess = (e) => { this.db = e.target.result; resolve(); };
+                    req.onerror = (e) => reject(e);
+                });
+            }
+            async getAll(storeName) {
+                return new Promise((resolve) => {
+                    if (!this.db) return resolve([]);
+                    const tx = this.db.transaction(storeName, "readonly");
+                    const store = tx.objectStore(storeName);
+                    const req = store.getAll();
+                    req.onsuccess = () => resolve(req.result || []);
+                    req.onerror = () => resolve([]);
+                });
+            }
+            async put(storeName, data) {
+                return new Promise((resolve) => {
+                    if (!this.db) return resolve();
+                    const tx = this.db.transaction(storeName, "readwrite");
+                    const store = tx.objectStore(storeName);
+                    store.put(data);
+                    tx.oncomplete = () => resolve();
+                });
+            }
+            async delete(storeName, id) {
+                return new Promise((resolve) => {
+                    if (!this.db) return resolve();
+                    const tx = this.db.transaction(storeName, "readwrite");
+                    const store = tx.objectStore(storeName);
+                    store.delete(id);
+                    tx.oncomplete = () => resolve();
+                });
+            }
+            async clearStore(storeName) {
+                return new Promise((resolve) => {
+                    if (!this.db) return resolve();
+                    const tx = this.db.transaction(storeName, "readwrite");
+                    const store = tx.objectStore(storeName);
+                    store.clear();
+                    tx.oncomplete = () => resolve();
+                });
+            }
+        }
+
+        window.localDB = new LocalIndexedDB();
+
+        // PUBLIC FIRESTORE HELPER PATH (RULE 1 COMPLIANT)
+        function getPublicColRef(collectionName) {
+            return collection(window.firebaseDb, 'artifacts', appId, 'public', 'data', collectionName);
+        }
+        function getPublicDocRef(collectionName, docId) {
+            return doc(window.firebaseDb, 'artifacts', appId, 'public', 'data', collectionName, docId);
+        }
+
+        // SAVE & DELETE ENTITY ENGINE (HANDLES FIREBASE FIRESTORE OR INDEXEDDB seamlessly)
+        window.saveEntity = async function(collectionName, item) {
+            if (!item.id) item.id = "ID-" + Date.now() + "-" + Math.floor(Math.random()*1000);
+            
+            // Always save to in-memory state
+            const list = window.appState[collectionName] || [];
+            const idx = list.findIndex(x => x.id === item.id);
+            if (idx >= 0) list[idx] = item; else list.push(item);
+
+            // Local DB backup
+            await window.localDB.put(collectionName, item);
+
+            // Firestore Sync if Cloud is Active
+            if (window.appState.isCloudActive && window.firebaseDb && window.dbUser) {
+                try {
+                    const docRef = getPublicDocRef(collectionName, item.id);
+                    await setDoc(docRef, item, { merge: true });
+                } catch (e) {
+                    console.error(`Error syncing ${collectionName} to Firestore:`, e);
+                }
+            }
+        };
+
+        window.deleteEntity = async function(collectionName, id) {
+            window.appState[collectionName] = (window.appState[collectionName] || []).filter(x => x.id !== id);
+            await window.localDB.delete(collectionName, id);
+
+            if (window.appState.isCloudActive && window.firebaseDb && window.dbUser) {
+                try {
+                    const docRef = getPublicDocRef(collectionName, id);
+                    await deleteDoc(docRef);
+                } catch (e) {
+                    console.error(`Error deleting ${id} from Firestore:`, e);
+                }
+            }
+        };
+
+        window.logAudit = async function(user, action, details) {
+            const logItem = {
+                id: "LOG-" + Date.now(),
+                user: user || "نظام",
+                action: action,
+                details: details,
+                timestamp: new Date().toLocaleString('ar-EG')
+            };
+            await window.saveEntity("auditLogs", logItem);
+        };
+
+        // FIREBASE INITIALIZATION & REAL-TIME LISTENERS
+        async function initFirebaseSystem() {
+            const statusDot = document.getElementById('cloud-status-dot');
+            const statusText = document.getElementById('cloud-status-text');
+            const footerStatus = document.getElementById('footer-db-status');
+
+            if (!firebaseConfig) {
+                // No config provided yet -> Fallback to Local IndexedDB
+                console.log("No Firebase config detected. Running in Local IndexedDB mode.");
+                window.appState.isCloudActive = false;
+                statusDot.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+                statusText.innerText = "تخزين محلي (IndexedDB)";
+                footerStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> التخزين محلي على المتصفح (غير متصل بالسحاب)`;
+                await loadLocalData();
+                return;
+            }
+
+            try {
+                window.firebaseApp = initializeApp(firebaseConfig);
+                window.firebaseAuth = getAuth(window.firebaseApp);
+                window.firebaseDb = getFirestore(window.firebaseApp);
+
+                // Authenticate (RULE 3)
+                const initialToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (initialToken) {
+                    const userCred = await signInWithCustomToken(window.firebaseAuth, initialToken);
+                    window.dbUser = userCred.user;
+                } else {
+                    const userCred = await signInAnonymously(window.firebaseAuth);
+                    window.dbUser = userCred.user;
+                }
+
+                window.appState.isCloudActive = true;
+                statusDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping";
+                statusText.innerText = "مباشر السحابي (Firebase)";
+                footerStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> متصل مباشرة بالسحاب (Firebase Firestore)`;
+
+                // Attach Real-Time Listeners (onSnapshot) for shared collections
+                setupFirestoreRealtimeListeners();
+            } catch (err) {
+                console.error("Firebase Auth/Firestore Init Error:", err);
+                window.appState.isCloudActive = false;
+                statusDot.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
+                statusText.innerText = "تعذر السحاب (وضع محلي)";
+                footerStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span> وضع محلي أوفلاين`;
+                await loadLocalData();
+            }
+        }
+
+        function setupFirestoreRealtimeListeners() {
+            const collectionsToSync = ["employees", "attendanceLogs", "leaveRequests", "settings", "auditLogs", "announcements", "financialAdjustments", "loans"];
+            
+            collectionsToSync.forEach(colName => {
+                const colRef = getPublicColRef(colName);
+                onSnapshot(colRef, (snapshot) => {
+                    const items = [];
+                    snapshot.forEach(docSnap => {
+                        items.push(docSnap.data());
+                    });
+                    
+                    if (colName === "settings") {
+                        window.appState.settings = items.find(x => x.id === "SYSTEM_CONFIG") || window.DEFAULT_SETTINGS;
+                        updateBrandingUI();
+                    } else {
+                        window.appState[colName] = items;
+                    }
+
+                    // Also cache locally
+                    items.forEach(item => window.localDB.put(colName, item));
+                    
+                    // Re-render current active view if logged in
+                    if (window.currentUser) {
+                        window.renderView();
+                    }
+                }, (error) => {
+                    console.error(`Realtime error on ${colName}:`, error);
+                });
+            });
+
+            // Seed clean initial data if Firestore is totally empty
+            setTimeout(async () => {
+                const settingsDoc = await getDoc(getPublicDocRef("settings", "SYSTEM_CONFIG"));
+                if (!settingsDoc.exists()) {
+                    console.log("Firestore empty. Seeding clean production base...");
+                    await window.saveEntity("settings", window.DEFAULT_SETTINGS);
+                    for (let emp of window.INITIAL_EMPLOYEES) await window.saveEntity("employees", emp);
+                    for (let ann of window.INITIAL_ANNOUNCEMENTS) await window.saveEntity("announcements", ann);
+                }
+            }, 1000);
+        }
+
+        async function loadLocalData() {
+            await window.localDB.init();
+            const collections = ["employees", "attendanceLogs", "leaveRequests", "settings", "auditLogs", "announcements", "financialAdjustments", "loans"];
+            
+            for (let col of collections) {
+                let items = await window.localDB.getAll(col);
+                if (col === "settings") {
+                    window.appState.settings = items.find(x => x.id === "SYSTEM_CONFIG") || window.DEFAULT_SETTINGS;
+                } else {
+                    window.appState[col] = items;
+                }
+            }
+
+            // Seed clean production initial state if empty
+            if (window.appState.employees.length === 0) {
+                window.appState.settings = window.DEFAULT_SETTINGS;
+                await window.localDB.put("settings", window.DEFAULT_SETTINGS);
+                for (let emp of window.INITIAL_EMPLOYEES) {
+                    window.appState.employees.push(emp);
+                    await window.localDB.put("employees", emp);
+                }
+                for (let ann of window.INITIAL_ANNOUNCEMENTS) {
+                    window.appState.announcements.push(ann);
+                    await window.localDB.put("announcements", ann);
+                }
+            }
+
+            updateBrandingUI();
+        }
+
+        // Global Ready Initialization
+        window.addEventListener('DOMContentLoaded', async () => {
+            await window.localDB.init();
+            await initFirebaseSystem();
+        });
+
+        // Expose Firebase Config Modal Opener
+        window.openFirebaseConfigModal = function() {
+            const backdrop = document.getElementById('modal-backdrop');
+            const content = document.getElementById('modal-content');
+
+            content.innerHTML = `
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-oss-navy text-white rounded-t-3xl border-b-4 border-oss-gold">
+                    <h3 class="font-black text-lg flex items-center gap-2">
+                        <i class="fas fa-cloud-bolt text-oss-gold"></i> إعدادات الربط والتزامن السحابي (Firebase Setup)
+                    </h3>
+                    <button onclick="closeModal()" class="text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                </div>
+                <div class="p-6 space-y-4 text-xs">
+                    <p class="text-slate-600 leading-relaxed font-bold">
+                        يتم ربط التطبيق تلقائياً بمفتاح السحاب في البيئة المدمجة. إذا كنت ترغب في تغيير إعدادات Firebase يدوياً لربطه بشركتك، يمكنك لصق JSON الخاص بـ Firebase Config هنا:
+                    </p>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">كود Firebase Config (JSON Format)</label>
+                        <textarea id="fb-config-input" rows="6" dir="ltr" class="w-full p-3 border rounded-xl font-mono text-xs text-slate-800 bg-slate-50" placeholder='{\n  "apiKey": "AIzaSy...",\n  "authDomain": "...",\n  "projectId": "...",\n  "storageBucket": "..."\n}'></textarea>
+                    </div>
+                    <div class="flex justify-between items-center pt-2">
+                        <span class="text-[11px] text-slate-400">حالة الاتصال الحالية: <strong>${window.appState.isCloudActive ? 'متصل بالسحاب (Live)' : 'محلي (IndexedDB)'}</strong></span>
+                        <div class="flex gap-2">
+                            <button onclick="closeModal()" class="px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-xl">إغلاق</button>
+                            <button onclick="saveManualFirebaseConfig()" class="px-5 py-2 bg-oss-maroon text-white font-extrabold rounded-xl shadow">حفظ وإعادة الاتصال</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            backdrop.classList.remove('hidden');
+        };
+
+        window.saveManualFirebaseConfig = function() {
+            const val = document.getElementById('fb-config-input').value.trim();
+            if (val) {
+                try {
+                    const parsed = JSON.parse(val);
+                    rawFirebaseConfig = parsed;
+                    firebaseConfig = parsed;
+                    closeModal();
+                    showToast("تم حفظ الإعدادات، جاري الاتصال بالسحاب...", "info");
+                    initFirebaseSystem();
+                } catch(e) {
+                    showToast("صيغة JSON غير صحيحة، يرجى التثبت من النص", "error");
+                }
+            }
+        };
+
+        window.startLiveProductionMode = async function() {
+            openCustomConfirmModal(
+                "بدء تشغيل إنتاجي ناصع وتصفير التجربة",
+                "هل أنت تأكد من رغبتك في تصفير جميع بيانات التجربة والبدء الفعلي؟ ستبقى فقط حسابات الإدارة المعتمدة وإعدادات الشركة الرسمية.",
+                async function() {
+                    const stores = ["attendanceLogs", "leaveRequests", "financialAdjustments", "loans", "auditLogs"];
+                    for (let s of stores) {
+                        window.appState[s] = [];
+                        await window.localDB.clearStore(s);
+                        if (window.appState.isCloudActive && window.firebaseDb) {
+                            // clear cloud
+                            const snap = await getDocs(getPublicColRef(s));
+                            snap.forEach(d => deleteDoc(d.ref));
+                        }
+                    }
+                    // Reset employees to management base
+                    window.appState.employees = [...window.INITIAL_EMPLOYEES];
+                    await window.localDB.clearStore("employees");
+                    for (let emp of window.INITIAL_EMPLOYEES) await window.saveEntity("employees", emp);
+
+                    showToast("تم تصفير بيانات الاختيارات والبدء الفعلي بنجاح!", "success");
+                    if (window.currentUser) window.renderView();
+                }
+            );
+        };
+    </script>
+
+    <!-- CORE SYSTEM LOGIC & ENGINE -->
+    <script>
+        // CMS Text Getter Helper
+        function getText(key, defaultVal) {
+            if (appState.settings && appState.settings.customTexts && appState.settings.customTexts[key]) {
+                return appState.settings.customTexts[key];
+            }
+            return defaultVal;
+        }
+
+        // UTILITIES & TOAST ENGINE
+        function showToast(message, type = "info") {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgClass = "bg-slate-900 text-white border-slate-700";
+            let icon = "fa-info-circle text-blue-400";
+            if (type === "success") {
+                bgClass = "bg-emerald-950 text-white border-emerald-700";
+                icon = "fa-check-circle text-emerald-400";
+            } else if (type === "error") {
+                bgClass = "bg-rose-950 text-white border-rose-700";
+                icon = "fa-exclamation-triangle text-rose-400";
+            }
+
+            toast.className = `p-4 rounded-2xl border shadow-2xl flex items-center justify-between gap-3 text-xs font-bold transition-all duration-300 translate-y-2 opacity-0 ${bgClass} pointer-events-auto`;
+            toast.innerHTML = `
+                <div class="flex items-center gap-2.5">
+                    <i class="fas ${icon} text-base"></i>
+                    <span>${message}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-white/60 hover:text-white"><i class="fas fa-times"></i></button>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function generateStrongPassword(targetInputId) {
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$!";
+            let pass = "";
+            for (let i = 0; i < 10; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+            const input = document.getElementById(targetInputId);
+            if (input) {
+                input.value = pass;
+                input.type = 'text';
+                showToast("تم توليد كلمة مرور قوية جديدة!", "info");
+            }
+        }
+
+        function updateBrandingUI() {
+            const settings = appState.settings || DEFAULT_SETTINGS;
+            const logo = settings.logoBase64;
+            const svgLogo = document.getElementById('svg-logo');
+            const customImg = document.getElementById('custom-logo-img');
+
+            if (logo) {
+                customImg.src = logo;
+                customImg.classList.remove('hidden');
+                svgLogo.classList.add('hidden');
+            } else {
+                customImg.classList.add('hidden');
+                svgLogo.classList.remove('hidden');
+            }
+
+            document.getElementById('header-company-title').innerText = settings.companyName || DEFAULT_SETTINGS.companyName;
+            document.getElementById('header-subtitle').innerText = settings.companySubtitle || DEFAULT_SETTINGS.companySubtitle;
+            document.getElementById('login-company-title').innerText = settings.companyName || DEFAULT_SETTINGS.companyName;
+            document.getElementById('login-company-sub').innerText = settings.companySubtitle || DEFAULT_SETTINGS.companySubtitle;
+        }
+
+        function getDaysUntil(dateStr) {
+            if (!dateStr) return 9999;
+            const target = new Date(dateStr);
+            const today = new Date();
+            const diffTime = target - today;
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        function calculateAge(birthDateStr) {
+            if (!birthDateStr) return 0;
+            const birth = new Date(birthDateStr);
+            const now = new Date();
+            let age = now.getFullYear() - birth.getFullYear();
+            const m = now.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+            return age;
+        }
+
+        function calculateYearsOfService(joinDateStr) {
+            if (!joinDateStr) return 0;
+            const join = new Date(joinDateStr);
+            const now = new Date();
+            let years = now.getFullYear() - join.getFullYear();
+            const m = now.getMonth() - join.getMonth();
+            if (m < 0 || (m === 0 && now.getDate() < join.getDate())) years--;
+            return years;
+        }
+
+        // Demo Data Loader (Optional for Testing)
+        async function loadSampleTestData() {
+            openCustomConfirmModal(
+                "تحميل بيانات تجريبية للاختبار",
+                "هل ترغب في تحميل موظفين وسجلات بصمة تجريبية لاختبار مزايا النظام السحابية؟ يمكنك تصفيرها للبدء الفعلي في أي وقت.",
+                async function() {
+                    const sampleEmployees = [
+                        {
+                            id: "EMP-101",
+                            name: "أحمد محمود الإمام",
+                            photoBase64: "",
+                            nationalId: "29501011200155",
+                            nationalIdExpiry: "2027-05-15",
+                            contractExpiry: "2027-12-31",
+                            healthCertExpiry: "2027-08-10",
+                            governorate: "القاهرة",
+                            departmentId: "DEP-REV",
+                            jobTitle: "كبير مراجعي نظم الجودة",
+                            basicSalary: 22000,
+                            allowances: 3000,
+                            annualLeaveBalance: 21,
+                            casualLeaveBalance: 7,
+                            sickLeaveBalance: 15,
+                            monthlyPermissionBalanceHours: 4,
+                            username: "emp_cairo",
+                            password: "123",
+                            role: "employee",
+                            status: "نشط",
+                            managerId: "MGR-001",
+                            phone: "01012345678",
+                            joinDate: "2015-03-01",
+                            birthDate: "1988-04-12",
+                            bankAccount: "EG12000400019920199201",
+                            custodyItems: [
+                                { itemName: "لابتوب Dell Latitude", serialNo: "DL-99201", issueDate: "2024-01-10", status: "مسلم للموظف" }
+                            ],
+                            careerTimeline: [
+                                { title: "تعيين بوظيفة مراجع جودة", date: "2015-03-01", description: "بداية التعاقد بفرع القاهرة" },
+                                { title: "ترقية لكبير مراجعي نظم الجودة", date: "2021-06-01", description: "اعتماد الترقتين بعد اجتياز تقييم ISO 9001" }
+                            ],
+                            warningsPenalties: [],
+                            leaveLedger: []
+                        },
+                        {
+                            id: "EMP-102",
+                            name: "سارة علي السيد",
+                            photoBase64: "",
+                            nationalId: "29705121400266",
+                            nationalIdExpiry: "2026-12-05",
+                            contractExpiry: "2027-06-30",
+                            healthCertExpiry: "2026-12-20",
+                            governorate: "الجيزة",
+                            departmentId: "DEP-QUAL",
+                            jobTitle: "استشاري مراجعة الأيزو",
+                            basicSalary: 16000,
+                            allowances: 2000,
+                            annualLeaveBalance: 18,
+                            casualLeaveBalance: 5,
+                            sickLeaveBalance: 12,
+                            monthlyPermissionBalanceHours: 4,
+                            username: "emp_giza",
+                            password: "123",
+                            role: "employee",
+                            status: "نشط",
+                            managerId: "MGR-003",
+                            phone: "01123456789",
+                            joinDate: "2023-01-15",
+                            birthDate: "1994-08-20",
+                            bankAccount: "EG99000400019920199202",
+                            custodyItems: [],
+                            careerTimeline: [],
+                            warningsPenalties: [],
+                            leaveLedger: []
+                        }
+                    ];
+
+                    for (let emp of sampleEmployees) await saveEntity("employees", emp);
+
+                    // Add Sample Attendance Logs
+                    const sampleLogs = [
+                        { id: "LOG-EMP-101-2026-11-01", empId: "EMP-101", empName: "أحمد محمود الإمام", governorate: "القاهرة", departmentId: "DEP-REV", date: "2026-11-01", checkIn: "08:50", checkOut: "17:00", lateMinutes: 0, overtimeHours: 0, status: "حاضر", excusedNote: "", settled: false },
+                        { id: "LOG-EMP-101-2026-11-02", empId: "EMP-101", empName: "أحمد محمود الإمام", governorate: "القاهرة", departmentId: "DEP-REV", date: "2026-11-02", checkIn: "09:35", checkOut: "17:00", lateMinutes: 35, overtimeHours: 0, status: "تأخير", excusedNote: "", settled: false },
+                        { id: "LOG-EMP-102-2026-11-01", empId: "EMP-102", empName: "سارة علي السيد", governorate: "الجيزة", departmentId: "DEP-QUAL", date: "2026-11-01", checkIn: "---", checkOut: "---", lateMinutes: 0, overtimeHours: 0, status: "غياب بدون عذر", excusedNote: "", settled: false }
+                    ];
+
+                    for (let log of sampleLogs) await saveEntity("attendanceLogs", log);
+
+                    showToast("تم تحميل البيانات التجريبية بنجاح بنظام التزامن!", "success");
+                    renderView();
+                }
+            );
+        }
+
+        // Backup & Restore Functions
+        function exportJSONBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const dl = document.createElement('a');
+            dl.setAttribute("href", dataStr);
+            dl.setAttribute("download", `OSS_HRIS_Enterprise_Backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(dl);
+            dl.click();
+            dl.remove();
+            showToast("تم تصدير ملف النسخة الاحتياطية الشاملة بنجاح!", "success");
+        }
+
+        function triggerImportBackup() {
+            document.getElementById('backup-file-input').click();
+        }
+
+        function importJSONBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.employees && imported.settings) {
+                        const stores = ["employees", "attendanceLogs", "leaveRequests", "financialAdjustments", "loans", "announcements", "settings", "auditLogs"];
+                        for (let storeName of stores) {
+                            if (imported[storeName]) {
+                                for (let item of imported[storeName]) await saveEntity(storeName, item);
+                            }
+                        }
+                        showToast("تم استعادة وتحديث النسخة الاحتياطية بنجاح!", "success");
+                        setTimeout(() => renderView(), 500);
+                    } else {
+                        showToast("ملف النسخة الاحتياطية غير صالح", "error");
+                    }
+                } catch(err) {
+                    showToast("خطأ أثناء استيراد البيانات", "error");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function openCustomConfirmModal(title, text, onConfirmCallback) {
+            const backdrop = document.getElementById('modal-backdrop');
+            const content = document.getElementById('modal-content');
+
+            content.innerHTML = `
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-oss-navy text-white rounded-t-3xl border-b-4 border-oss-gold">
+                    <h3 class="font-black text-lg flex items-center gap-2"><i class="fas fa-triangle-exclamation text-oss-gold"></i> ${title}</h3>
+                    <button onclick="closeModal()" class="text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <p class="text-sm font-bold text-slate-700 leading-relaxed">${text}</p>
+                    <div class="pt-4 flex justify-end gap-3 border-t border-slate-100">
+                        <button onclick="closeModal()" class="px-4 py-2 bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">إلغاء</button>
+                        <button id="confirm-modal-action-btn" class="px-5 py-2 bg-rose-700 hover:bg-rose-800 text-white font-extrabold text-xs rounded-xl shadow">تأكيد الإجراء</button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('confirm-modal-action-btn').onclick = function() {
+                closeModal();
+                onConfirmCallback();
+            };
+
+            backdrop.classList.remove('hidden');
+        }
+
+        // Excel Sample Generator
+        function downloadExcelSample() {
+            const sampleData = [
+                { "كود الموظف": "EMP-101", "اسم الموظف": "أحمد محمود الإمام", "التاريخ": "2026-11-01", "وقت الدخول": "08:50", "وقت الانصراف": "17:00" },
+                { "كود الموظف": "EMP-101", "اسم الموظف": "أحمد محمود الإمام", "التاريخ": "2026-11-02", "وقت الدخول": "09:35", "وقت الانصراف": "17:00" },
+                { "كود الموظف": "EMP-102", "اسم الموظف": "سارة علي السيد", "التاريخ": "2026-11-01", "وقت الدخول": "08:55", "وقت الانصراف": "17:00" },
+                { "كود الموظف": "EMP-102", "اسم الموظف": "سارة علي السيد", "التاريخ": "2026-11-02", "وقت الدخول": "---", "وقت الانصراف": "---" }
+            ];
+            const ws = XLSX.utils.json_to_sheet(sampleData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "AttendanceSample");
+            XLSX.writeFile(wb, "OSS_Attendance_Sample.xlsx");
+            showToast("تم تحضير وتنزيل نموذج شيت البصمة التجريبي!", "success");
+        }
+
+        function uploadAttendanceExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                    let importedCount = 0;
+                    for (let row of jsonData) {
+                        const empId = row["كود الموظف"] || row["empId"];
+                        const date = row["التاريخ"] || row["date"];
+                        const checkIn = row["وقت الدخول"] || row["checkIn"] || "09:00";
+                        const checkOut = row["وقت الانصراف"] || row["checkOut"] || "17:00";
+                        
+                        const emp = appState.employees.find(e => e.id === empId);
+                        if (emp && date) {
+                            let lateMins = 0;
+                            let status = "حاضر";
+
+                            if (checkIn !== "---") {
+                                const [h, m] = checkIn.split(':').map(Number);
+                                const checkInMins = h * 60 + m;
+                                const thresholdMins = 9 * 60 + 15; // 09:15 Threshold
+                                if (checkInMins > thresholdMins) {
+                                    lateMins = checkInMins - (9 * 60);
+                                    status = "تأخير";
+                                }
+                            } else {
+                                status = "غياب بدون عذر";
+                            }
+
+                            const logObj = {
+                                id: `LOG-${empId}-${date}`,
+                                empId: empId,
+                                empName: emp.name,
+                                governorate: emp.governorate,
+                                departmentId: emp.departmentId,
+                                date: date,
+                                checkIn: checkIn,
+                                checkOut: checkOut,
+                                lateMinutes: lateMins,
+                                overtimeHours: 0,
+                                status: status,
+                                excusedNote: "",
+                                settled: false,
+                                settlementInfo: null
+                            };
+                            await saveEntity("attendanceLogs", logObj);
+                            importedCount++;
+                        }
+                    }
+                    showToast(`تم استيراد ${importedCount} سجل بصمة بنجاح!`, "success");
+                    renderView();
+                } catch(err) {
+                    showToast("حدث خطأ أثناء قراءة شيت البصمة", "error");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // ATTENDANCE & PAYROLL ENGINE (09:15 + 240 MIN GRACE + SETTLEMENT INTEGRATION)
+        function calculateEmployeeAttendanceSummary(empId) {
+            const empLogs = (appState.attendanceLogs || []).filter(l => l.empId === empId);
+            const graceBank = (appState.settings ? appState.settings.gracePeriodMinutes : 240) || 240;
+
+            let totalLateMins = 0;
+            let totalOvertimeHours = 0;
+            let unexcusedAbsenceDays = 0;
+            let totalSettlementBonuses = 0;
+            let totalSettlementDeductions = 0;
+
+            empLogs.forEach(log => {
+                const approvedLeave = (appState.leaveRequests || []).find(r => 
+                    r.empId === empId && 
+                    r.status === 'مقبول' && 
+                    log.date >= r.startDate && 
+                    log.date <= r.endDate
+                );
+
+                if (log.settlementInfo) {
+                    const st = log.settlementInfo;
+                    if (st.settlementBonus > 0) totalSettlementBonuses += st.settlementBonus;
+                    if (st.settlementDeduction > 0) totalSettlementDeductions += st.settlementDeduction;
+
+                    if (st.leaveConverted) {
+                        log.justificationNote = `تسوية: تحويل إلى (${st.leaveConvertedType})`;
+                    } else {
+                        totalLateMins += (log.lateMinutes || 0);
+                        totalOvertimeHours += (log.overtimeHours || 0);
+                        log.justificationNote = st.notes || "تسوية إدارية معتمدة";
+                    }
+                } else if (approvedLeave || log.excusedNote) {
+                    log.justificationNote = approvedLeave ? `معفى بناءً على (${approvedLeave.type})` : log.excusedNote;
+                } else if (log.status === 'غياب بدون عذر') {
+                    unexcusedAbsenceDays += 1;
+                } else {
+                    totalLateMins += (log.lateMinutes || 0);
+                    totalOvertimeHours += (log.overtimeHours || 0);
+                }
+            });
+
+            const consumedGrace = Math.min(graceBank, totalLateMins);
+            const excessLateMins = Math.max(0, totalLateMins - graceBank);
+            
+            const emp = appState.employees.find(e => e.id === empId);
+            const dailyWage = (emp ? (emp.basicSalary + emp.allowances) : 10000) / 30;
+            const hourlyWage = (emp ? (emp.basicSalary + emp.allowances) : 10000) / 160;
+
+            const lateDeductionAmount = Math.round((excessLateMins / 60) * (appState.settings?.lateRatePerHour || 60));
+            const overtimeBonusAmount = Math.round(totalOvertimeHours * hourlyWage * (appState.settings?.overtimeRateMultiplier || 1.5));
+            const absenceDeductionAmount = Math.round(unexcusedAbsenceDays * dailyWage * (appState.settings?.absentPenaltyDays || 1.5));
+
+            return {
+                totalLateMins,
+                consumedGrace,
+                remainingGrace: graceBank - consumedGrace,
+                excessLateMins,
+                lateDeductionAmount,
+                totalOvertimeHours,
+                overtimeBonusAmount,
+                unexcusedAbsenceDays,
+                absenceDeductionAmount,
+                totalSettlementBonuses,
+                totalSettlementDeductions
+            };
+        }
+
+        function calculatePayrollForEmployee(emp) {
+            const summary = calculateEmployeeAttendanceSummary(emp.id);
+            const adj = (appState.financialAdjustments || []).filter(a => a.empId === emp.id);
+            const empLoans = (appState.loans || []).filter(l => l.empId === emp.id && l.remainingAmount > 0);
+
+            const bonuses = adj.filter(a => a.type === 'bonus').reduce((sum, a) => sum + a.amount, 0) + summary.totalSettlementBonuses;
+            const deductions = adj.filter(a => a.type === 'deduction').reduce((sum, a) => sum + a.amount, 0) + summary.totalSettlementDeductions;
+            const advances = adj.filter(a => a.type === 'advance').reduce((sum, a) => sum + a.amount, 0);
+            const loanInstallments = empLoans.reduce((sum, l) => sum + (l.monthlyInstallment || 0), 0);
+
+            const warningsPenaltiesDeductions = (emp.warningsPenalties || [])
+                .filter(w => w.financialDeduction > 0)
+                .reduce((sum, w) => sum + w.financialDeduction, 0);
+
+            const grossSalary = emp.basicSalary + emp.allowances + summary.overtimeBonusAmount + bonuses;
+            const totalDeductions = summary.lateDeductionAmount + summary.absenceDeductionAmount + deductions + advances + loanInstallments + warningsPenaltiesDeductions;
+            const netSalary = grossSalary - totalDeductions;
+
+            return {
+                emp,
+                basicSalary: emp.basicSalary,
+                allowances: emp.allowances,
+                summary,
+                bonuses,
+                deductions,
+                advances,
+                loanInstallments,
+                warningsPenaltiesDeductions,
+                grossSalary,
+                totalDeductions,
+                netSalary: Math.max(0, netSalary)
+            };
+        }
+
+        // AUTHENTICATION & NAVIGATION PIPELINE
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('login-username').value.trim();
+            const p = document.getElementById('login-password').value.trim();
+
+            const user = appState.employees.find(emp => emp.username === u && emp.password === p);
+
+            if (user) {
+                if (user.status === 'موقوف') {
+                    showToast("حسابك مجمد حالياً من قبل الموارد البشرية", "error");
+                    return;
+                }
+                currentUser = user;
+                showToast(`أهلاً بك، ${currentUser.name}!`, "success");
+                logAudit(currentUser.name, "تسجيل دخول", `تسجيل دخول ناجح بصلاحية (${currentUser.role})`);
+                initUserSession();
+            } else {
+                showToast("اسم المستخدم أو كلمة المرور غير صحيحة", "error");
+            }
+        }
+
+        function logout() {
+            if (currentUser) logAudit(currentUser.name, "تسجيل خروج", "خروج من النظام");
+            currentUser = null;
+            document.getElementById('main-header').classList.add('hidden');
+            document.getElementById('app-content').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+            showToast("تم تسجيل الخروج بنجاح", "info");
+        }
+
+        function initUserSession() {
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('main-header').classList.remove('hidden');
+            document.getElementById('app-content').classList.remove('hidden');
+
+            document.getElementById('user-display-name').innerText = currentUser.name;
+            
+            if (currentUser.photoBase64) {
+                document.getElementById('user-avatar-img').src = currentUser.photoBase64;
+                document.getElementById('user-avatar-img').classList.remove('hidden');
+                document.getElementById('user-avatar-char').classList.add('hidden');
+            } else {
+                document.getElementById('user-avatar-char').innerText = currentUser.name.charAt(0);
+                document.getElementById('user-avatar-img').classList.add('hidden');
+                document.getElementById('user-avatar-char').classList.remove('hidden');
+            }
+
+            const rolesText = { admin: "مدير HR وشؤون العاملين", manager: `مدير فرع (${currentUser.governorate})`, employee: "موظف" };
+            document.getElementById('user-role-badge').innerText = rolesText[currentUser.role] || "موظف";
+
+            setupNavigationTabs();
+            renderView();
+        }
+
+        function setupNavigationTabs() {
+            const navContainer = document.getElementById('nav-tabs-container');
+            navContainer.innerHTML = "";
+
+            let tabs = [];
+            if (currentUser.role === 'admin') {
+                tabs = [
+                    { id: 'admin_dashboard', label: 'اللوحة التنفيذية والإحصائيات', icon: 'fa-chart-pie' },
+                    { id: 'personnel_vault', label: 'شؤون العاملين والوثائق والعُهد', icon: 'fa-id-card-clip' },
+                    { id: 'leave_balances_hub', label: 'أرصدة وسجل الإجازات الفردية', icon: 'fa-scale-balanced' },
+                    { id: 'attendance_processor', label: 'معالج البصمة والتسويات الذكية', icon: 'fa-fingerprint' },
+                    { id: 'leave_approvals', label: 'إدارة طلبات وموافقة الإجازات', icon: 'fa-calendar-check' },
+                    { id: 'payroll_engine', label: 'كشف الرواتب الشهري والسُلف', icon: 'fa-file-invoice-dollar' },
+                    { id: 'hr_letters_gen', label: 'مولد الخطابات والشهادات الرسمية', icon: 'fa-file-signature' },
+                    { id: 'accounts_rbac', label: 'إدارة الحسابات والباسوردات والصلاحيات', icon: 'fa-user-lock' },
+                    { id: 'cms_customizer', label: 'محرر النصوص والسياسات CMS', icon: 'fa-pen-to-square' },
+                    { id: 'audit_logs', label: 'سجل الرقابة والتدقيق', icon: 'fa-shield-halved' }
+                ];
+            } else if (currentUser.role === 'manager') {
+                tabs = [
+                    { id: 'branch_hub', label: `مركز فرع ${currentUser.governorate}`, icon: 'fa-building-circle-check' },
+                    { id: 'attendance_processor', label: 'تسويات وبصمة فريقي', icon: 'fa-fingerprint' },
+                    { id: 'manager_leaves', label: 'طلبات وتعارضات الإجازات', icon: 'fa-calendar-day' },
+                    { id: 'leave_balances_hub', label: 'أرصدة إجازات الفرع', icon: 'fa-scale-balanced' },
+                    { id: 'hr_letters_gen', label: 'الشهادات المعتمدة', icon: 'fa-file-signature' },
+                    { id: 'my_profile', label: 'ملفي الوظيفي', icon: 'fa-id-card' }
+                ];
+            } else {
+                tabs = [
+                    { id: 'my_profile', label: 'بطاقتي ومؤشر الـ 240 دقيقة', icon: 'fa-id-card' },
+                    { id: 'emp_leave_request', label: 'تقديم طلب إجازة / مأمورية', icon: 'fa-paper-plane' },
+                    { id: 'emp_payslip_logs', label: 'سجل البصمة ومفردات المرتب', icon: 'fa-receipt' },
+                    { id: 'hr_letters_gen', label: 'خطاب التعريف بالراتب', icon: 'fa-file-signature' }
+                ];
+            }
+
+            activeTab = tabs[0].id;
+
+            tabs.forEach(t => {
+                const btn = document.createElement('button');
+                btn.className = `nav-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap ${t.id === activeTab ? 'bg-white text-oss-maroon shadow-md' : 'text-white/80 hover:text-white hover:bg-white/10'}`;
+                btn.dataset.tab = t.id;
+                btn.innerHTML = `<i class="fas ${t.icon}"></i> <span>${t.label}</span>`;
+                btn.onclick = () => switchTab(t.id);
+                navContainer.appendChild(btn);
+            });
+        }
+
+        function switchTab(tabId) {
+            activeTab = tabId;
+            document.querySelectorAll('.nav-tab-btn').forEach(b => {
+                if (b.dataset.tab === tabId) {
+                    b.className = "nav-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap bg-white text-oss-maroon shadow-md";
+                } else {
+                    b.className = "nav-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap text-white/80 hover:text-white hover:bg-white/10";
+                }
+            });
+            renderView();
+        }
+
+        // VIEW ROUTER & RENDERERS
+        function renderView() {
+            const container = document.getElementById('app-content');
+            if (!container) return;
+            container.innerHTML = "";
+
+            switch (activeTab) {
+                case 'admin_dashboard': renderExecutiveDashboard(container); break;
+                case 'personnel_vault': renderPersonnelVaultSection(container); break;
+                case 'leave_balances_hub': renderLeaveBalancesHubSection(container); break;
+                case 'accounts_rbac': renderAccountsAndRBACSection(container); break;
+                case 'attendance_processor': renderAttendanceProcessorSection(container); break;
+                case 'leave_approvals': renderLeaveApprovalsSection(container); break;
+                case 'payroll_engine': renderPayrollEngineSection(container); break;
+                case 'hr_letters_gen': renderHRLettersGeneratorSection(container); break;
+                case 'cms_customizer': renderCMSCustomizerSection(container); break;
+                case 'audit_logs': renderAuditLogsSection(container); break;
+                case 'branch_hub': renderExecutiveDashboard(container); break;
+                case 'manager_leaves': renderLeaveApprovalsSection(container); break;
+                case 'my_profile': renderMyProfileSection(container); break;
+                case 'emp_leave_request': renderEmpLeaveRequestSection(container); break;
+                case 'emp_payslip_logs': renderEmpPayslipLogsSection(container); break;
+                default: container.innerHTML = `<div class="p-8 text-center text-slate-500">جاري تحميل الصفحة...</div>`;
+            }
+        }
+
+        // A. EXECUTIVE DASHBOARD & TEAM COVERAGE BOARD
+        function renderExecutiveDashboard(container) {
+            const totalEmps = appState.employees.length;
+            const pendingLeaves = (appState.leaveRequests || []).filter(r => r.status.includes('معلق')).length;
+            const totalPayrollBudget = appState.employees.reduce((acc, emp) => acc + (emp.basicSalary + emp.allowances), 0);
+            
+            const expiringDocs = [];
+            const leaveUpgradeAlerts = [];
+
+            appState.employees.forEach(emp => {
+                const idDays = getDaysUntil(emp.nationalIdExpiry);
+                const contractDays = getDaysUntil(emp.contractExpiry);
+                const healthDays = getDaysUntil(emp.healthCertExpiry);
+
+                if (idDays <= 30) expiringDocs.push({ emp, type: "بطاقة الرقم القومي", days: idDays });
+                if (contractDays <= 30) expiringDocs.push({ emp, type: "عقد العمل", days: contractDays });
+                if (healthDays <= 30) expiringDocs.push({ emp, type: "الشهادة الصحية", days: healthDays });
+
+                const yearsService = calculateYearsOfService(emp.joinDate);
+                const age = calculateAge(emp.birthDate);
+                if ((yearsService >= 10 || age >= 50) && emp.annualLeaveBalance < 30) {
+                    leaveUpgradeAlerts.push({ emp, yearsService, age, currentBalance: emp.annualLeaveBalance });
+                }
+            });
+
+            const govMap = {};
+            GOVERNORATES.forEach(g => govMap[g] = 0);
+            appState.employees.forEach(e => govMap[e.governorate] = (govMap[e.governorate] || 0) + 1);
+
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <!-- Banner -->
+                    <div class="bg-gradient-to-r from-oss-navy via-slate-900 to-oss-maroon text-white p-6 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 border-b-4 border-oss-gold">
+                        <div>
+                            <h2 class="text-xl font-black">${getText('welcomeMessage', 'أهلاً بك في البوابة الإلكترونية الشاملة لشركة OSS Middle East Certification')}</h2>
+                            <p class="text-xs text-oss-gold font-semibold mt-1">منظومة الموارد البشرية، البصمة، الرواتب، والتزامن السحابي الحقيقي بين المحافظات</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="loadSampleTestData()" class="text-xs bg-amber-500 hover:bg-amber-600 text-slate-900 px-3.5 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow">
+                                <i class="fas fa-flask"></i> تحميل بيانات تجريبية للاختبار
+                            </button>
+                            <span class="px-3.5 py-2 bg-white/10 rounded-xl text-xs font-bold border border-white/20"><i class="fas fa-clock text-oss-gold"></i> ${new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        </div>
+                    </div>
+
+                    ${leaveUpgradeAlerts.length > 0 ? `
+                        <div class="bg-blue-50 border-2 border-blue-300 p-5 rounded-3xl space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-black text-blue-900 text-sm flex items-center gap-2">
+                                    <i class="fas fa-award text-blue-600 text-lg"></i>
+                                    <span>تنبيه استحقاق زيادة رصيد الإجازات السنوية إلى 30 يوماً (قانون العمل)</span>
+                                </h3>
+                                <button onclick="switchTab('leave_balances_hub')" class="text-xs font-bold text-blue-800 underline">إدارة أرصدة الإجازات</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                ${leaveUpgradeAlerts.map(a => `
+                                    <div class="bg-white p-3 rounded-2xl border border-blue-200 text-xs space-y-1 flex items-center justify-between">
+                                        <div>
+                                            <div class="font-extrabold text-slate-800">${a.emp.name}</div>
+                                            <div class="text-[10px] text-blue-700 font-semibold">الخبرة: ${a.yearsService} سنة | العمر: ${a.age} سنة</div>
+                                        </div>
+                                        <button onclick="upgradeAnnualLeaveTo30('${a.emp.id}')" class="px-3 py-1.5 bg-blue-700 hover:bg-blue-800 text-white font-extrabold text-[11px] rounded-xl shadow">
+                                            ترقية لـ 30 يوم
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-black text-slate-400 uppercase">إجمالي كادر الموظفين</p>
+                                <h3 class="text-3xl font-black text-slate-800 mt-1">${totalEmps} <span class="text-xs font-normal text-slate-500">موظف</span></h3>
+                                <p class="text-[11px] text-oss-maroon font-bold mt-1">القاهرة • الجيزة • الإسكندرية</p>
+                            </div>
+                            <div class="w-14 h-14 rounded-2xl bg-oss-maroon/10 text-oss-maroon flex items-center justify-center text-2xl border border-oss-maroon/20">
+                                <i class="fas fa-users font-black"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-black text-slate-400 uppercase">طلبات إجازات معلقة</p>
+                                <h3 class="text-3xl font-black text-amber-600 mt-1">${pendingLeaves} <span class="text-xs font-normal text-slate-500">طلب</span></h3>
+                                <p class="text-[11px] text-slate-500 mt-1">بانتظار موافقة المدير أو HR</p>
+                            </div>
+                            <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl border border-amber-200">
+                                <i class="fas fa-clock-rotate-left"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-black text-slate-400 uppercase">كتلة الرواتب الأساسية</p>
+                                <h3 class="text-3xl font-black text-slate-800 mt-1">${totalPayrollBudget.toLocaleString()} <span class="text-xs font-normal text-slate-500">ج.م</span></h3>
+                                <p class="text-[11px] text-emerald-600 font-bold mt-1">شاملة البدلات الثابتة</p>
+                            </div>
+                            <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl border border-emerald-200">
+                                <i class="fas fa-vault"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-black text-slate-400 uppercase">رصيد سماح التأخير الشهري</p>
+                                <h3 class="text-3xl font-black text-oss-navy mt-1">${(appState.settings?.gracePeriodMinutes || 240)} <span class="text-xs font-normal text-slate-500">دقيقة</span></h3>
+                                <p class="text-[11px] text-slate-500 mt-1">تطبيق الخصم بعد 09:15 ص</p>
+                            </div>
+                            <div class="w-14 h-14 rounded-2xl bg-oss-navy/10 text-oss-navy flex items-center justify-center text-2xl border border-oss-navy/20">
+                                <i class="fas fa-user-clock"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts & Announcements -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm lg:col-span-2 space-y-4">
+                            <h3 class="text-base font-black text-slate-800 flex items-center gap-2">
+                                <i class="fas fa-chart-bar text-oss-maroon"></i> توزيع الموظفين حسب فروع المحافظات الثلاث
+                            </h3>
+                            <div class="h-64 relative">
+                                <canvas id="chart-gov-distribution"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+                            <h3 class="text-base font-black text-slate-800 flex items-center justify-between">
+                                <span class="flex items-center gap-2"><i class="fas fa-bullhorn text-oss-navy"></i> التعميمات والأخبار</span>
+                                <span class="text-xs text-slate-400 font-normal">(${(appState.announcements || []).length})</span>
+                            </h3>
+
+                            <div class="space-y-3 max-h-60 overflow-y-auto pr-1">
+                                ${(appState.announcements || []).map(a => `
+                                    <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <h4 class="font-extrabold text-xs text-slate-800">${a.title}</h4>
+                                            <span class="text-[10px] text-slate-400 font-mono">${a.date}</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-600">${a.content}</p>
+                                        <span class="inline-block text-[9px] bg-oss-navy/10 text-oss-navy px-2 py-0.5 rounded font-bold">بواسطة: ${a.author}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            setTimeout(() => {
+                const ctx = document.getElementById('chart-gov-distribution')?.getContext('2d');
+                if (ctx) {
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: GOVERNORATES,
+                            datasets: [{
+                                label: 'عدد الموظفين',
+                                data: GOVERNORATES.map(g => govMap[g] || 0),
+                                backgroundColor: ['#822429', '#212561', '#C59B27'],
+                                borderRadius: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } }
+                        }
+                    });
+                }
+            }, 100);
+        }
+
+        async function upgradeAnnualLeaveTo30(empId) {
+            const emp = appState.employees.find(e => e.id === empId);
+            if (!emp) return;
+            const oldBal = emp.annualLeaveBalance;
+            emp.annualLeaveBalance = 30;
+
+            if (!emp.leaveLedger) emp.leaveLedger = [];
+            emp.leaveLedger.push({
+                id: "LL-" + Date.now(),
+                date: new Date().toISOString().slice(0,10),
+                type: "اعتيادي",
+                changeAmount: 30 - oldBal,
+                newTotal: 30,
+                reason: "ترقية استحقاق 10 سنوات خدمة / تجاوز سن الـ 50",
+                user: currentUser.name
+            });
+
+            await saveEntity("employees", emp);
+            await logAudit(currentUser.name, "ترقية رصيد إجازات", `ترقية رصيد الإجازات السنوية للموظف ${emp.name} إلى 30 يوماً`);
+            showToast(`تم تحديث رصيد الإجازات السنوية للموظف ${emp.name} إلى 30 يوماً بنجاح!`, "success");
+            renderView();
+        }
+
+        // B. INDIVIDUAL LEAVE BALANCE & LEDGER HUB
+        function renderLeaveBalancesHubSection(container) {
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                                <i class="fas fa-scale-balanced text-oss-maroon"></i> أرصدة وسجل الإجازات الفردية لكل موظف
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-1">تخصيص رصيد الإجازات، ترحيل الأرصدة، وتتبع دفتر الحركات التاريخية</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden p-6 space-y-4">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs">
+                                <thead class="bg-oss-navy text-white font-bold uppercase">
+                                    <tr>
+                                        <th class="p-3">الموظف والفرع</th>
+                                        <th class="p-3">سنوات الخدمة والعمر</th>
+                                        <th class="p-3">الرصيد الاعتيادي السنوي</th>
+                                        <th class="p-3">الرصيد العارض</th>
+                                        <th class="p-3">الرصيد المرضي</th>
+                                        <th class="p-3">رصيد الأذونات الشهرية</th>
+                                        <th class="p-3 text-center">تعديل / ترحيل رصيد</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${appState.employees.map(emp => {
+                                        const y = calculateYearsOfService(emp.joinDate);
+                                        const age = calculateAge(emp.birthDate);
+                                        return `
+                                            <tr class="hover:bg-slate-50 transition">
+                                                <td class="p-3 font-bold text-slate-800">
+                                                    <div>${emp.name}</div>
+                                                    <div class="text-[10px] text-slate-400 font-mono">${emp.id} • ${emp.governorate}</div>
+                                                </td>
+                                                <td class="p-3">
+                                                    <div class="font-bold text-slate-700">${y} سنة خدمة</div>
+                                                    <div class="text-[10px] text-slate-500 font-mono">العمر: ${age} سنة</div>
+                                                </td>
+                                                <td class="p-3 font-extrabold text-oss-maroon text-sm">
+                                                    ${emp.annualLeaveBalance} يوم
+                                                    ${(y >= 10 || age >= 50) ? '<span class="mr-1 px-1.5 py-0.5 text-[9px] bg-blue-100 text-blue-800 rounded font-bold">استحقاق 30</span>' : ''}
+                                                </td>
+                                                <td class="p-3 font-bold text-slate-700">${emp.casualLeaveBalance || 7} يوم</td>
+                                                <td class="p-3 font-bold text-slate-700">${emp.sickLeaveBalance || 15} يوم</td>
+                                                <td class="p-3 font-bold text-slate-700">${emp.monthlyPermissionBalanceHours || 4} ساعات/شهر</td>
+                                                <td class="p-3 text-center">
+                                                    <button onclick="openLeaveLedgerModal('${emp.id}')" class="px-3 py-1.5 bg-oss-navy hover:bg-oss-navyHover text-white rounded-xl font-bold text-[11px] shadow">
+                                                        <i class="fas fa-edit ml-1"></i> تعديل / ترحيل
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openLeaveLedgerModal(empId) {
+            const emp = appState.employees.find(e => e.id === empId);
+            const ledger = emp.leaveLedger || [];
+
+            const backdrop = document.getElementById('modal-backdrop');
+            const content = document.getElementById('modal-content');
+
+            content.innerHTML = `
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-oss-navy text-white rounded-t-3xl border-b-4 border-oss-gold">
+                    <div>
+                        <h3 class="font-black text-lg">تعديل وتعديل رصيد الإجازات - ${emp.name}</h3>
+                        <p class="text-xs text-oss-gold font-bold">كود الموظف: ${emp.id} • الفرع: ${emp.governorate}</p>
+                    </div>
+                    <button onclick="closeModal()" class="text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                </div>
+
+                <div class="p-6 space-y-6">
+                    <form onsubmit="saveLeaveBalanceAdjustment(event, '${emp.id}')" class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-4">
+                        <h4 class="font-black text-xs text-slate-800 border-b pb-2 flex items-center gap-1.5">
+                            <i class="fas fa-sliders text-oss-maroon"></i> تسجيل الحركة وتعديل الأرصدة
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">نوع الرصيد</label>
+                                <select id="la-type" class="w-full p-2 border rounded-xl font-bold">
+                                    <option value="اعتيادي">إجازة اعتيادية سنوية</option>
+                                    <option value="عارضة">إجازة عارضة</option>
+                                    <option value="مرضي">إجازة مرضية</option>
+                                    <option value="أذونات">رصيد أذونات شهري (ساعات)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">مقدار التعديل (أيام / ساعات)</label>
+                                <input type="number" id="la-amount" step="0.5" required placeholder="مثال: +5 أو -2" class="w-full p-2 border rounded-xl font-bold font-mono">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block font-bold text-slate-700 mb-1">سبب التعديل / ترحيل سنة سابقة</label>
+                                <input type="text" id="la-reason" required placeholder="مثال: ترحيل 5 أيام اعتيادي من عام 2025" class="w-full p-2 border rounded-xl font-bold">
+                            </div>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="submit" class="px-5 py-2 bg-oss-maroon text-white font-extrabold text-xs rounded-xl shadow">
+                                تنفيذ الحركة وتحديث الدفتر
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="space-y-3">
+                        <h4 class="font-black text-xs text-slate-800">سجل حركات وأرصدة الإجازات التاريخية (Leave Balance Ledger)</h4>
+                        <div class="max-h-56 overflow-y-auto border border-slate-200 rounded-2xl">
+                            <table class="w-full text-right text-xs">
+                                <thead class="bg-slate-100 text-slate-700 font-bold">
+                                    <tr>
+                                        <th class="p-2.5">التاريخ</th>
+                                        <th class="p-2.5">النوع</th>
+                                        <th class="p-2.5">التغيير</th>
+                                        <th class="p-2.5">الرصيد الجديد</th>
+                                        <th class="p-2.5">السبب / البيان</th>
+                                        <th class="p-2.5">المستخدِم</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${ledger.length === 0 ? `<tr><td colspan="6" class="p-4 text-center text-slate-400">لا توجد حركات مسجلة بالدفتر</td></tr>` : ledger.map(l => `
+                                        <tr>
+                                            <td class="p-2.5 font-mono text-slate-500">${l.date}</td>
+                                            <td class="p-2.5 font-bold">${l.type}</td>
+                                            <td class="p-2.5 font-mono font-bold ${l.changeAmount >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+                                                ${l.changeAmount >= 0 ? '+' + l.changeAmount : l.changeAmount}
+                                            </td>
+                                            <td class="p-2.5 font-mono font-bold text-slate-800">${l.newTotal}</td>
+                                            <td class="p-2.5 text-slate-600">${l.reason}</td>
+                                            <td class="p-2.5 font-bold text-oss-navy">${l.user}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            backdrop.classList.remove('hidden');
+        }
+
+        async function saveLeaveBalanceAdjustment(e, empId) {
+            e.preventDefault();
+            const type = document.getElementById('la-type').value;
+            const amount = parseFloat(document.getElementById('la-amount').value) || 0;
+            const reason = document.getElementById('la-reason').value.trim();
+
+            const emp = appState.employees.find(e => e.id === empId);
+            if (!emp) return;
+
+            let newTotal = 0;
+            if (type === 'اعتيادي') {
+                emp.annualLeaveBalance = Math.max(0, (emp.annualLeaveBalance || 0) + amount);
+                newTotal = emp.annualLeaveBalance;
+            } else if (type === 'عارضة') {
+                emp.casualLeaveBalance = Math.max(0, (emp.casualLeaveBalance || 0) + amount);
+                newTotal = emp.casualLeaveBalance;
+            } else if (type === 'مرضي') {
+                emp.sickLeaveBalance = Math.max(0, (emp.sickLeaveBalance || 0) + amount);
+                newTotal = emp.sickLeaveBalance;
+            } else if (type === 'أذونات') {
+                emp.monthlyPermissionBalanceHours = Math.max(0, (emp.monthlyPermissionBalanceHours || 0) + amount);
+                newTotal = emp.monthlyPermissionBalanceHours;
+            }
+
+            if (!emp.leaveLedger) emp.leaveLedger = [];
+            emp.leaveLedger.unshift({
+                id: "LL-" + Date.now(),
+                date: new Date().toISOString().slice(0,10),
+                type,
+                changeAmount: amount,
+                newTotal,
+                reason,
+                user: currentUser.name
+            });
+
+            await saveEntity("employees", emp);
+            await logAudit(currentUser.name, "تعديل رصيد إجازات", `تعديل رصيد (${type}) بمقدار (${amount}) للموظف ${emp.name}`);
+            closeModal();
+            showToast("تم تنفيذ حركة ترحيل وتعديل رصيد الإجازات بنجاح!", "success");
+            renderView();
+        }
+
+        // C. SMART ATTENDANCE & SETTLEMENT ENGINE
+        function renderAttendanceProcessorSection(container) {
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                                <i class="fas fa-fingerprint text-oss-maroon"></i> معالج سحب البصمة والتسويات الذكية
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-1">إلغاء التأخير، تحويل الغياب إلى إجازة معتمدة، والتسويات المالية الفورية</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="downloadExcelSample()" class="px-3.5 py-2.5 bg-slate-800 text-white font-bold text-xs rounded-xl shadow flex items-center gap-1.5">
+                                <i class="fas fa-file-excel text-emerald-400"></i> نموذج Excel للبصمة
+                            </button>
+                            <label class="px-4 py-2.5 bg-oss-navy text-white font-extrabold text-xs rounded-xl shadow cursor-pointer flex items-center gap-1.5">
+                                <i class="fas fa-upload"></i> رفع شيت البصمة (.xlsx)
+                                <input type="file" accept=".xlsx, .csv" class="hidden" onchange="uploadAttendanceExcel(event)">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden p-6 space-y-4">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs">
+                                <thead class="bg-slate-100 text-slate-700 font-bold uppercase">
+                                    <tr>
+                                        <th class="p-3">التاريخ</th>
+                                        <th class="p-3">الموظف والفرع</th>
+                                        <th class="p-3">بصمة الدخول / الخروج</th>
+                                        <th class="p-3">دقائق التأخير</th>
+                                        <th class="p-3">الحالة والملاحظات</th>
+                                        <th class="p-3 text-center">التسويات الذكية</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${(appState.attendanceLogs || []).slice(0, 40).map(log => `
+                                        <tr class="hover:bg-slate-50 transition">
+                                            <td class="p-3 font-mono font-bold text-slate-700">${log.date}</td>
+                                            <td class="p-3 font-bold text-slate-800">${log.empName} (${log.governorate})</td>
+                                            <td class="p-3 font-mono">حضور: ${log.checkIn} | انصراف: ${log.checkOut}</td>
+                                            <td class="p-3 font-bold ${log.lateMinutes > 0 ? 'text-rose-600' : 'text-slate-400'}">${log.lateMinutes || 0} دقيقة</td>
+                                            <td class="p-3">
+                                                <div class="flex items-center gap-1.5 flex-wrap">
+                                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                                                        log.status === 'غياب بدون عذر' ? 'bg-rose-100 text-rose-800' :
+                                                        (log.status === 'تأخير' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800')
+                                                    }">
+                                                        ${log.status}
+                                                    </span>
+                                                    ${log.settlementInfo ? `
+                                                        <span class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded-lg text-[9px] font-black">
+                                                            <i class="fas fa-check-double ml-1"></i>تمت التسوية
+                                                        </span>
+                                                    ` : ''}
+                                                </div>
+                                                ${log.justificationNote ? `<div class="text-[10px] text-blue-700 font-bold mt-1">${log.justificationNote}</div>` : ''}
+                                            </td>
+                                            <td class="p-3 text-center">
+                                                <button onclick="openSettlementModal('${log.id}')" class="px-3 py-1.5 bg-oss-navy hover:bg-oss-navyHover text-white rounded-xl text-[11px] font-bold shadow flex items-center gap-1 mx-auto">
+                                                    <i class="fas fa-sliders"></i>
+                                                    <span>تسوية</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openSettlementModal(logId) {
+            const log = appState.attendanceLogs.find(l => l.id === logId);
+            const emp = appState.employees.find(e => e.id === log.empId);
+
+            const backdrop = document.getElementById('modal-backdrop');
+            const content = document.getElementById('modal-content');
+
+            content.innerHTML = `
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-oss-navy text-white rounded-t-3xl border-b-4 border-oss-gold">
+                    <div>
+                        <h3 class="font-black text-lg">نافذة تسوية الحضور والبصمة والرواتب الشاملة</h3>
+                        <p class="text-xs text-oss-gold font-bold">الموظف: ${log.empName} (${log.empId}) • تاريخ السجل: ${log.date}</p>
+                    </div>
+                    <button onclick="closeModal()" class="text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                </div>
+
+                <form onsubmit="saveSmartSettlement(event, '${log.id}')" class="p-6 space-y-6">
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div><span class="text-slate-400">حالة السجل الحالية:</span> <strong class="font-bold text-slate-800">${log.status}</strong></div>
+                        <div><span class="text-slate-400">دقائق التأخير الحالية:</span> <strong class="font-bold text-rose-600">${log.lateMinutes || 0} دقيقة</strong></div>
+                        <div><span class="text-slate-400">بصمة الدخول:</span> <strong class="font-mono text-slate-800">${log.checkIn}</strong></div>
+                        <div><span class="text-slate-400">بصمة الانصراف:</span> <strong class="font-mono text-slate-800">${log.checkOut}</strong></div>
+                    </div>
+
+                    <div class="p-4 bg-white rounded-2xl border border-slate-200 space-y-3">
+                        <h4 class="font-black text-xs text-slate-800 flex items-center gap-1.5">
+                            <i class="fas fa-clock text-amber-600"></i> 1. تسوية دقائق التأخير وإعفاء الحضور
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">دقائق التأخير المعتمدة بعد التسوية</label>
+                                <input type="number" id="st-late" value="0" class="w-full p-2 border rounded-xl font-bold font-mono">
+                                <p class="text-[10px] text-slate-400 mt-1">أدخل 0 للإلغاء الكامل وإعفاء التأخير</p>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">تعديل ساعات الإضافي المعتمدة (Overtime)</label>
+                                <input type="number" id="st-ot" value="${log.overtimeHours || 0}" step="0.5" class="w-full p-2 border rounded-xl font-bold font-mono">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 space-y-3">
+                        <h4 class="font-black text-xs text-amber-900 flex items-center gap-1.5">
+                            <i class="fas fa-calendar-day text-amber-700"></i> 2. تحويل الغياب إلى إجازة وتخصيمها من رصيد الموظف
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">تحويل اليوم إلى نوع إجازة معتمدة</label>
+                                <select id="st-leave-type" class="w-full p-2 border rounded-xl font-bold">
+                                    <option value="">-- بدون تحويل إجازة --</option>
+                                    <option value="اعتيادي">إجازة اعتيادية (تخصم يوم من رصيد الموظف السنوي)</option>
+                                    <option value="عارضة">إجازة عارضة (تخصم يوم من الرصيد العارض)</option>
+                                    <option value="مرضي">إجازة مرضية (تخصم من الرصيد المرضي)</option>
+                                    <option value="مأمورية خارجية">مأمورية عمل خارجية (بدون خصم رصيد)</option>
+                                    <option value="إذن رسمي">إذن رسمي معتمد (بدون خصم رصيد)</option>
+                                </select>
+                            </div>
+                            <div class="text-[11px] text-slate-600 space-y-1">
+                                <p class="font-bold text-slate-800">أرصدة الموظف المتاحة حالياً:</p>
+                                <p>الاعتيادي: <strong class="text-oss-maroon font-bold">${emp ? emp.annualLeaveBalance : 0} يوم</strong> | العارضة: <strong class="text-oss-maroon font-bold">${emp ? emp.casualLeaveBalance : 0} يوم</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-white rounded-2xl border border-slate-200 space-y-3">
+                        <h4 class="font-black text-xs text-slate-800 flex items-center gap-1.5">
+                            <i class="fas fa-coins text-emerald-600"></i> 3. التسوية المالية المباشرة على المرتب (Bonus / Deduction)
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">مكافأة تسوية إيجابية (تضاف للمرتب)</label>
+                                <input type="number" id="st-bonus" value="0" class="w-full p-2 border rounded-xl font-bold text-emerald-700 font-mono" placeholder="0 ج.م">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">خصم تسوية إدارية (يخصم من المرتب)</label>
+                                <input type="number" id="st-deduction" value="0" class="w-full p-2 border rounded-xl font-bold text-rose-700 font-mono" placeholder="0 ج.م">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">سبب وملاحظة الاعتماد في سجل التدقيق</label>
+                        <input type="text" id="st-notes" required placeholder="أدخل سبب التسوية وملاحظات اعتماد الموارد البشرية..." class="w-full p-2.5 border rounded-xl text-xs font-bold">
+                    </div>
+
+                    <div class="pt-4 flex justify-end gap-2 border-t border-slate-100">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">إلغاء</button>
+                        <button type="submit" class="px-5 py-2 bg-oss-maroon text-white rounded-xl text-xs font-extrabold shadow">
+                            حفظ وتثبيت التسوية الشاملة
+                        </button>
+                    </div>
+                </form>
+            `;
+            backdrop.classList.remove('hidden');
+        }
+
+        async function saveSmartSettlement(e, logId) {
+            e.preventDefault();
+            const log = appState.attendanceLogs.find(l => l.id === logId);
+            const emp = appState.employees.find(e => e.id === log.empId);
+
+            const lateMins = parseInt(document.getElementById('st-late').value) || 0;
+            const otHours = parseFloat(document.getElementById('st-ot').value) || 0;
+            const leaveType = document.getElementById('st-leave-type').value;
+            const bonus = parseFloat(document.getElementById('st-bonus').value) || 0;
+            const ded = parseFloat(document.getElementById('st-deduction').value) || 0;
+            const notes = document.getElementById('st-notes').value.trim();
+
+            log.lateMinutes = lateMins;
+            log.overtimeHours = otHours;
+            log.settled = true;
+
+            let leaveConverted = false;
+            let leaveConvertedType = "";
+
+            if (leaveType && emp) {
+                leaveConverted = true;
+                leaveConvertedType = leaveType;
+                log.status = `حاضر (${leaveType})`;
+                
+                if (leaveType === 'اعتيادي') {
+                    emp.annualLeaveBalance = Math.max(0, (emp.annualLeaveBalance || 0) - 1);
+                } else if (leaveType === 'عارضة') {
+                    emp.casualLeaveBalance = Math.max(0, (emp.casualLeaveBalance || 0) - 1);
+                } else if (leaveType === 'مرضي') {
+                    emp.sickLeaveBalance = Math.max(0, (emp.sickLeaveBalance || 0) - 1);
+                }
+
+                if (!emp.leaveLedger) emp.leaveLedger = [];
+                emp.leaveLedger.unshift({
+                    id: "LL-" + Date.now(),
+                    date: new Date().toISOString().slice(0,10),
+                    type: leaveType,
+                    changeAmount: -1,
+                    newTotal: leaveType === 'اعتيادي' ? emp.annualLeaveBalance : emp.casualLeaveBalance,
+                    reason: `خصم يوم غياب بتسوية البصمة لتاريخ (${log.date})`,
+                    user: currentUser.name
+                });
+                await saveEntity("employees", emp);
+            } else if (lateMins === 0 && log.status === 'تأخير') {
+                log.status = "حاضر (معفى)";
+            }
+
+            log.settlementInfo = {
+                settledBy: currentUser.name,
+                settledAt: new Date().toLocaleString('ar-EG'),
+                settlementBonus: bonus,
+                settlementDeduction: ded,
+                leaveConverted: leaveConverted,
+                leaveConvertedType: leaveConvertedType,
+                notes: notes
+            };
+
+            await saveEntity("attendanceLogs", log);
+            await logAudit(currentUser.name, "تسوية بصمة وحضور", `إجراء تسوية شاملة لسجل الموظف ${log.empName} بتاريخ (${log.date}) - ملاحظات: ${notes}`);
+            
+            closeModal();
+            showToast("تم تطبيق وحفظ التسوية الشاملة وتعديل المرتب ورصيد الإجازات بنجاح!", "success");
+            renderView();
+        }
+
+        // D. OFFICIAL HR LETTERS GENERATOR
+        function renderHRLettersGeneratorSection(container) {
+            container.innerHTML = `
+                <div class="space-y-6 max-w-4xl mx-auto">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                        <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                            <i class="fas fa-file-signature text-oss-navy"></i> مولد الخطابات والشهادات المعتمدة من الموارد البشرية
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-1">طباعة خطابات التعريف بالراتب، شهادات الخبرة الرسمية، وتقارير الحضور التفصيلية</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">اختر الموظف</label>
+                                <select id="hr-letter-emp" class="w-full p-2.5 border rounded-xl text-xs font-bold">
+                                    ${appState.employees.map(e => `<option value="${e.id}">${e.name} (${e.governorate} - ${e.jobTitle})</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">نوع المستند / الخطاب المطلوب</label>
+                                <select id="hr-letter-type" class="w-full p-2.5 border rounded-xl text-xs font-bold">
+                                    <option value="salary_letter">خطاب تعريف بالراتب (HR Salary Letter)</option>
+                                    <option value="experience_cert">شهادة خبرة وبيان حالة وظيفية</option>
+                                    <option value="attendance_report">تقرير بصمة وحضور شهري تفصيلي</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 flex justify-end">
+                            <button onclick="generateHRDocumentModal()" class="px-6 py-2.5 bg-oss-maroon hover:bg-oss-maroonHover text-white font-extrabold text-xs rounded-xl shadow flex items-center gap-2">
+                                <i class="fas fa-print"></i>
+                                <span>توليد ومعاينة الخطاب للطباعة</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateHRDocumentModal() {
+            const empId = document.getElementById('hr-letter-emp').value;
+            const docType = document.getElementById('hr-letter-type').value;
+
+            const emp = appState.employees.find(e => e.id === empId);
+            const dept = DEPARTMENTS.find(d => d.id === emp.departmentId);
+
+            const backdrop = document.getElementById('modal-backdrop');
+            const content = document.getElementById('modal-content');
+
+            let bodyHTML = "";
+
+            if (docType === 'salary_letter') {
+                bodyHTML = `
+                    <div class="text-center space-y-2 border-b-2 border-oss-gold pb-4">
+                        <h3 class="font-black text-xl text-oss-navy">خطاب تعريف بالراتب المفصل</h3>
+                        <p class="text-xs text-slate-500 font-bold">To Whom It May Concern / إلى من يهمه الأمر</p>
+                    </div>
+
+                    <div class="space-y-4 text-xs leading-relaxed text-slate-800">
+                        <p>تشهد شركة <strong>OSS Middle East Certification</strong> بأن السيد / <strong>${emp.name}</strong>، حامل بطاقة رقم قومي رقم (<strong>${emp.nationalId}</strong>)، يعمل لدينا بوظيفة (<strong>${emp.jobTitle}</strong>) بفرع (${emp.governorate})، وذلك اعتبارا من تاريخ تعيينه في <strong>${emp.joinDate}</strong> وحتى تاريخه.</p>
+
+                        <p>ونفيد سيادتكم بأن المذكور يتقاضى راتباً شهرياً إجمالياً قدره <strong>${(emp.basicSalary + emp.allowances).toLocaleString()} جنيه مصري فقط لا غير</strong>، ومفصل كالتالي:</p>
+
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 grid grid-cols-2 gap-3 font-bold">
+                            <div>الراتب الأساسي الشهري: <span class="text-emerald-700">${emp.basicSalary.toLocaleString()} ج.م</span></div>
+                            <div>البدلات والحوافز الثابتة: <span class="text-emerald-700">${emp.allowances.toLocaleString()} ج.م</span></div>
+                        </div>
+
+                        <p>وقد أُعطي هذا الخطاب بناءً على طلب المذكور دون أدنى مسؤولية على الشركة تجاه حقوق الغير.</p>
+                    </div>
+                `;
+            } else if (docType === 'experience_cert') {
+                bodyHTML = `
+                    <div class="text-center space-y-2 border-b-2 border-oss-gold pb-4">
+                        <h3 class="font-black text-xl text-oss-navy">شهادة خبرة وبيان حالة وظيفية</h3>
+                        <p class="text-xs text-slate-500 font-bold">Official Experience Certificate</p>
+                    </div>
+
+                    <div class="space-y-4 text-xs leading-relaxed text-slate-800">
+                        <p>تشهد إدارة الموارد البشرية بشركة <strong>OSS Middle East Certification</strong> بأن السيد / <strong>${emp.name}</strong> قد عمل في كادر الشركة في الفترة من <strong>${emp.joinDate}</strong> وحتى تاريخه.</p>
+
+                        <p>وقد شغل خلال هذه الفترة وظيفة <strong>${emp.jobTitle}</strong> بالإدارة المعنية (<strong>${dept ? dept.name : emp.departmentId}</strong>)، وأبدى خلال فترة عمله الكفاءة وحسن السلوك والالتزام بالمعايير الدولية للجودة والاعتماد.</p>
+                    </div>
+                `;
+            } else {
+                const empLogs = (appState.attendanceLogs || []).filter(l => l.empId === empId);
+                bodyHTML = `
+                    <div class="text-center space-y-2 border-b-2 border-oss-gold pb-4">
+                        <h3 class="font-black text-xl text-oss-navy">تقرير بصمة وحضور تفصيلي</h3>
+                        <p class="text-xs text-slate-500 font-bold">كود الموظف: ${emp.id} • ${emp.name}</p>
+                    </div>
+
+                    <table class="w-full text-xs text-right border-collapse">
+                        <thead class="bg-slate-100 text-slate-700 font-bold">
+                            <tr>
+                                <th class="p-2 border">التاريخ</th>
+                                <th class="p-2 border">الدخول</th>
+                                <th class="p-2 border">الانصراف</th>
+                                <th class="p-2 border">التأخير</th>
+                                <th class="p-2 border">الحالة والبيان</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${empLogs.map(l => `
+                                <tr>
+                                    <td class="p-2 border font-mono">${l.date}</td>
+                                    <td class="p-2 border font-mono">${l.checkIn}</td>
+                                    <td class="p-2 border font-mono">${l.checkOut}</td>
+                                    <td class="p-2 border font-bold">${l.lateMinutes || 0} دقيقة</td>
+                                    <td class="p-2 border">${l.status} ${l.justificationNote ? `(${l.justificationNote})` : ''}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            content.innerHTML = `
+                <div class="p-4 border-b border-slate-100 flex items-center justify-between no-print bg-slate-900 text-white rounded-t-3xl">
+                    <h3 class="font-bold text-xs">معاينة الخطاب المعتمد للطباعة</h3>
+                    <div class="flex items-center gap-2">
+                        <button onclick="window.print()" class="px-4 py-1.5 bg-oss-maroon text-white rounded-lg text-xs font-bold shadow">
+                            <i class="fas fa-print ml-1"></i> طباعة الخطاب
+                        </button>
+                        <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+
+                <div id="printable-area" class="p-8 space-y-6 bg-white text-slate-800">
+                    <div class="flex justify-between items-center border-b-2 border-oss-maroon pb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-16 h-16 bg-white border-2 border-oss-gold p-1 rounded-xl flex items-center justify-center">
+                                <svg viewBox="0 0 100 100" class="w-full h-full">
+                                    <rect x="2" y="2" width="96" height="96" fill="#822429" stroke="#212561" stroke-width="4" rx="4"/>
+                                    <rect x="6" y="6" width="88" height="88" fill="none" stroke="#ffffff" stroke-width="1.5" rx="2"/>
+                                    <rect x="6" y="6" width="88" height="22" fill="#212561"/>
+                                    <text x="50" y="62" font-family="'Times New Roman', serif" font-weight="bold" font-size="34" fill="#ffffff" text-anchor="middle">oSs</text>
+                                    <text x="50" y="80" font-family="'Times New Roman', serif" font-weight="bold" font-size="11" fill="#ffffff" text-anchor="middle">Middle East</text>
+                                    <text x="50" y="90" font-family="'Times New Roman', serif" font-style="italic" font-size="7" fill="#C59B27" text-anchor="middle">Certification</text>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="font-black text-xl text-oss-navy">${appState.settings?.companyName || DEFAULT_SETTINGS.companyName}</h2>
+                                <p class="text-xs text-oss-maroon font-bold">إدارة الموارد البشرية وشؤون العاملين</p>
+                            </div>
+                        </div>
+                        <div class="text-left text-xs font-mono text-slate-500">
+                            <p>التاريخ: ${new Date().toISOString().slice(0,10)}</p>
+                            <p>الرقم الإشاري: HR-${emp.id}-${Date.now().toString().slice(-4)}</p>
+                        </div>
+                    </div>
+
+                    ${bodyHTML}
+
+                    <div class="pt-12 border-t border-slate-200 grid grid-cols-2 text-center text-xs text-slate-600">
+                        <div><p class="font-bold mb-8">${appState.settings?.signatureHR || DEFAULT_SETTINGS.signatureHR}</p><p>........................................</p></div>
+                        <div><p class="font-bold mb-8">${appState.settings?.signatureGM || DEFAULT_SETTINGS.signatureGM}</p><p>........................................</p></div>
+                    </div>
+
+                    <div class="text-center text-[10px] text-slate-400 border-t pt-3">
+                        <p>${appState.settings?.footerPrintText || DEFAULT_SETTINGS.footerPrintText}</p>
+                    </div>
+                </div>
+            `;
+            backdrop.classList.remove('hidden');
+        }
+
+        // E. PERSONNEL VAULT & FULL PROFILES
+        function renderPersonnelVaultSection(container) {
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                                <i class="fas fa-id-card-clip text-oss-maroon"></i> إدارة شؤون العاملين والسجل الوظيفي والعُهد والوثائق
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-1">تتبع التغييرات الوظيفية، صلاحية الهويات والعقود، وتسليم/استلام العُهد العينية</p>
+                        </div>
+                        <button onclick="openEmployeeEditModal()" class="px-5 py-2.5 bg-oss-maroon hover:bg-oss-maroonHover text-white font-extrabold text-xs rounded-xl shadow transition flex items-center gap-2">
+                            <i class="fas fa-user-plus"></i>
+                            <span>إضافة موظف جديد</span>
+                        </button>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div class="flex items-center gap-2 w-full sm:w-auto flex-1">
+                            <input type="text" id="emp-search" oninput="filterEmployeesTable()" placeholder="ابحث باسم الموظف، الكود، أو الرقم القومي..." class="w-full p-2.5 border border-slate-200 rounded-xl font-bold">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <select id="emp-filter-gov" onchange="filterEmployeesTable()" class="p-2.5 border rounded-xl font-bold text-slate-700">
+                                <option value="">كل المحافظات</option>
+                                ${GOVERNORATES.map(g => `<option value="${g}">${g}</option>`).join('')}
+                            </select>
+                            <select id="emp-filter-dept" onchange="filterEmployeesTable()" class="p-2.5 border rounded-xl font-bold text-slate-700">
+                                <option value="">كل الإدارات</option>
+                                ${DEPARTMENTS.map(d => `<option value="${d.id}">${d.name}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden p-6 space-y-4">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs" id="employees-table">
+                                <thead class="bg-slate-100 text-slate-700 font-bold uppercase">
+                                    <tr>
+                                        <th class="p-3">الموظف والكود</th>
+                                        <th class="p-3">المحافظة والإدارة</th>
+                                        <th class="p-3">المسمى الوظيفي والراتب</th>
+                                        <th class="p-3">صلاحية الرقم القومي والعقد</th>
+                                        <th class="p-3">العُهد العينية</th>
+                                        <th class="p-3 text-center">إجراءات شؤون العاملين</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100" id="emp-table-body">
+                                    ${renderEmployeeTableRows(appState.employees)}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderEmployeeTableRows(empList) {
+            return empList.map(emp => {
+                const idDays = getDaysUntil(emp.nationalIdExpiry);
+                const contractDays = getDaysUntil(emp.contractExpiry);
+                const dept = DEPARTMENTS.find(d => d.id === emp.departmentId);
+                const custodyCount = (emp.custodyItems || []).length;
+
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 font-bold text-slate-800 flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-oss-navy text-white text-xs font-black flex items-center justify-center border border-oss-gold overflow-hidden">
+                                ${emp.photoBase64 ? `<img src="${emp.photoBase64}" class="w-full h-full object-cover">` : emp.name.charAt(0)}
+                            </div>
+                            <div>
+                                <div class="font-extrabold text-slate-900">${emp.name}</div>
+                                <div class="text-[10px] text-slate-400 font-mono">${emp.id} • تليفون: ${emp.phone || 'غير مسجل'}</div>
+                            </div>
+                        </td>
+                        <td class="p-3">
+                            <div class="font-bold text-oss-navy">${emp.governorate}</div>
+                            <div class="text-[10px] text-slate-500">${dept ? dept.name.split('(')[0] : emp.departmentId}</div>
+                        </td>
+                        <td class="p-3">
+                            <div class="font-bold text-slate-800">${emp.jobTitle}</div>
+                            <div class="text-[10px] font-mono text-emerald-700 font-bold">${(emp.basicSalary + emp.allowances).toLocaleString()} ج.م</div>
+                        </td>
+                        <td class="p-3 space-y-0.5">
+                            <div class="text-[11px] ${idDays <= 30 ? 'text-rose-600 font-bold' : 'text-slate-600'}">
+                                القومي: ${emp.nationalIdExpiry || 'غير محدد'}
+                            </div>
+                            <div class="text-[11px] ${contractDays <= 30 ? 'text-amber-600 font-bold' : 'text-slate-600'}">
+                                العقد: ${emp.contractExpiry || 'غير محدد'}
+                            </div>
+                        </td>
+                        <td class="p-3">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${custodyCount > 0 ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-500'}">
+                                ${custodyCount} عُهد مسجلة
+                            </span>
+                        </td>
+                        <td class="p-3 text-center">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <button onclick="openEmployeeFullMasterModal('${emp.id}')" class="px-3 py-1.5 bg-oss-navy text-white rounded-lg font-bold text-[11px]" title="عرض ودراسة ملف الموظف الكامل">
+                                    <i class="fas fa-folder-open ml-1"></i> الملف الكامل
+                                </button>
+                                <button onclick="openEmployeeEditModal('${emp.id}')" class="px-2.5 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg font-bold text-[11px]">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterEmployeesTable() {
+            const search = document.getElementById('emp-search').value.toLowerCase();
+            const gov = document.getElementById('emp-filter-gov').value;
+            const dept = document.getElementById('emp-filter-dept').value;
+
+            const filtered = appState.employees.filter(e => {
+                const matchSearch = e.name.toLowerCase().includes(search) || e.id.toLowerCase().includes(search) || (e.nationalId && e.nationalId.includes(search));
+                const matchGov = !gov || e.governorate === gov;
+                const matchDept = !dept || e.departmentId === dept;
+                return matchSearch && matchGov && matchDept;
+            });
+
+            document.getElementById('emp-table-body').innerHTML = renderEmployeeTableRows(filtered);
+        }
+
+        function openEmployeeEditModal(empId = null) {
+            const emp = empId ? appState.employees.find(e => e.id === empId) : {
+                id: "EMP-" + (Math.floor(Math.random()*900) + 100),
+                name: "", nationalId: "", nationalIdExpiry: "", contractExpiry: "", healthCertExpiry: "",
+                governorate: "القاهرة", departmentId: "DEP-REV", jobTitle: "", basicSalary: 12000,
+                allowances: 1500, annualLeaveBalance: 21, casualLeaveBalance: 7, sickLeaveBalance: 15, monthlyPermissionBalanceHours: 4, username: "", password: "123",
+                role: "employee", status: "نشط", managerId: "", phone: "", joinDate: new Date().toISOString().slice(0,10), birthDate: "1990-01-01",
+                bankAccount: "", custodyItems: [], careerTimeline: [], warningsPenalties: [], leaveLedger: []
+            };
+
+            const backdrop = document.getElementById('modal-backdrop');
+            const content = document.getElementById('modal-content');
+
+            content.innerHTML = `
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-oss-navy text-white rounded-t-3xl border-b-4 border-oss-gold">
+                    <h3 class="font-black text-lg">${empId ? 'تعديل بيانات موظف' : 'إضافة موظف جديد لشركة OSS Middle East'}</h3>
+                    <button onclick="closeModal()" class="text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                </div>
+                <form onsubmit="saveEmployeeForm(event, '${emp.id}')" class="p-6 space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">اسم الموظف الثلاثي</label>
+                            <input type="text" id="ef-name" required value="${emp.name}" class="w-full p-2.5 border rounded-xl text-xs font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">الرقم القومي (14 رقم)</label>
+                            <input type="text" id="ef-nid" required value="${emp.nationalId}" class="w-full p-2.5 border rounded-xl text-xs font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">تاريخ انتهاء القومي</label>
+                            <input type="date" id="ef-nid-exp" required value="${emp.nationalIdExpiry}" class="w-full p-2.5 border rounded-xl text-xs font-mono">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">فرع المحافظة</label>
+                            <select id="ef-gov" class="w-full p-2.5 border rounded-xl text-xs font-bold">
+                                ${GOVERNORATES.map(g => `<option value="${g}" ${emp.governorate === g ? 'selected' : ''}>${g}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">الإدارة / التخصص</label>
+                            <select id="ef-dept" class="w-full p-2.5 border rounded-xl text-xs font-bold">
+                                ${DEPARTMENTS.map(d => `<option value="${d.id}" ${emp.departmentId === d.id ? 'selected' : ''}>${d.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">المسمى الوظيفي</label>
+                            <input type="text" id="ef-title" required value="${emp.jobTitle}" class="w-full p-2.5 border rounded-xl text-xs font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">تاريخ الميلاد</label>
+                            <input type="date" id="ef-birth" required value="${emp.birthDate || '1990-01-01'}" class="w-full p-2.5 border rounded-xl text-xs font-mono">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">الرصيد السنوي الاعتيادي</label>
+                            <input type="number" id="ef-ann-bal" required value="${emp.annualLeaveBalance}" class="w-full p-2.5 border rounded-xl text-xs font-bold font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">الرصيد العارض</label>
+                            <input type="number" id="ef-cas-bal" required value="${emp.casualLeaveBalance || 7}" class="w-full p-2.5 border rounded-xl text-xs font-bold font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">الراتب الأساسي (ج.م)</label>
+                            <input type="number" id="ef-basic" required value="${emp.basicSalary}" class="w-full p-2.5 border rounded-xl text-xs font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">البدلات الثابتة (ج.م)</label>
+                            <input type="number" id="ef-allow" required value="${emp.allowances}" class="w-full p-2.5 border rounded-xl text-xs font-bold">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">اسم المستخدم للنظام</label>
+                            <input type="text" id="ef-user" required value="${emp.username || 'emp_' + emp.id.toLowerCase()}" class="w-full p-2.5 border rounded-xl text-xs font-mono font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">كلمة المرور</label>
+                            <div class="relative">
+                                <input type="password" id="ef-pass" required value="${emp.password || '123'}" class="w-full p-2.5 pl-20 border rounded-xl text-xs font-mono">
+                                <div class="absolute left-1 top-1 flex items-center gap-1">
+                                    <button type="button" onclick="togglePasswordVisibility('ef-pass')" class="p-1 text-slate-500 hover:text-slate-700"><i class="fas fa-eye text-xs"></i></button>
+                                    <button type="button" onclick="generateStrongPassword('ef-pass')" class="px-2 py-0.5 bg-slate-800 text-white rounded text-[10px] font-bold">توليد</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex justify-end gap-2 border-t border-slate-100">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">إلغاء</button>
+                        <button type="submit" class="px-5 py-2 bg-oss-maroon text-white rounded-xl text-xs font-bold shadow">حفظ بيانات الموظف</button>
+                    </div>
+                </form>
+            `;
+            backdrop.classList.remove('hidden');
+        }
+
+        async function saveEmployeeForm(e, empId) {
+            e.preventDefault();
+            let emp = appState.employees.find(e => e.id === empId);
+            const isNew = !emp;
+
+            if (isNew) {
+                emp = {
+                    id: empId,
+                    custodyItems: [],
+                    careerTimeline: [],
+                    warningsPenalties: [],
+                    leaveLedger: []
+                };
+            }
+
+            emp.name = document.getElementById('ef-name').value.trim();
+            emp.nationalId = document.getElementById('ef-nid').value.trim();
+            emp.nationalIdExpiry = document.getElementById('ef-nid-exp').value;
+            emp.governorate = document.getElementById('ef-gov').value;
+            emp.departmentId = document.getElementById('ef-dept').value;
+            emp.jobTitle = document.getElementById('ef-title').value.trim();
+            emp.birthDate = document.getElementById('ef-birth').value;
+            emp.annualLeaveBalance = parseFloat(document.getElementById('ef-ann-bal').value) || 21;
+            emp.casualLeaveBalance = parseFloat(document.getElementById('ef-cas-bal').value) || 7;
+            emp.basicSalary = parseFloat(document.getElementById('ef-basic').value) || 0;
+            emp.allowances = parseFloat(document.getElementById('ef-allow').value) || 0;
+            emp.username = document.getElementById('ef-user').value.trim();
+            emp.password = document.getElementById('ef-pass').value.trim();
+            
+            if (isNew) {
+                emp.role = "employee";
+                emp.status = "نشط";
+                emp.joinDate = new Date().toISOString().slice(0,10);
+            }
+
+            await saveEntity("employees", emp);
+            await logAudit(currentUser.name, isNew ? "إضافة موظف" : "تعديل موظف", `حفظ بيانات الموظف ${emp.name} (${emp.id})`);
+            closeModal();
+            showToast("تم حفظ بيانات الموظف بنجاح!", "success");
+            renderView();
+        }
+
+        function openEmployeeFullMasterModal(empId) {
+            const emp = appState.employees.find(e => e.id === empId);
+
+            const backdrop = document.getElementById('modal-backdrop');
+            const content = document.getElementById('modal-content');
+
+            content.innerHTML = `
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-oss-navy text-white rounded-t-3xl border-b-4 border-oss-gold">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-white text-oss-navy font-black text-xl flex items-center justify-center border-2 border-oss-gold overflow-hidden">
+                            ${emp.photoBase64 ? `<img src="${emp.photoBase64}" class="w-full h-full object-cover">` : emp.name.charAt(0)}
+                        </div>
+                        <div>
+                            <h3 class="font-black text-lg">${emp.name}</h3>
+                            <p class="text-xs text-oss-gold font-bold">${emp.jobTitle} • ${emp.governorate} • كود: ${emp.id}</p>
+                        </div>
+                    </div>
+                    <button onclick="closeModal()" class="text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                </div>
+
+                <div class="p-6 space-y-6">
+                    <div class="flex border-b border-slate-200 gap-2 text-xs font-bold" id="emp-master-tabs">
+                        <button onclick="switchEmpMasterTab('tab-bio')" class="emp-mtab px-4 py-2 border-b-2 border-oss-maroon text-oss-maroon" data-mtab="tab-bio"><i class="fas fa-user-tag ml-1"></i> البيانات والمالية</button>
+                        <button onclick="switchEmpMasterTab('tab-timeline')" class="emp-mtab px-4 py-2 text-slate-500 hover:text-slate-800" data-mtab="tab-timeline"><i class="fas fa-timeline ml-1"></i> السجل الوظيفي</button>
+                        <button onclick="switchEmpMasterTab('tab-custody')" class="emp-mtab px-4 py-2 text-slate-500 hover:text-slate-800" data-mtab="tab-custody"><i class="fas fa-boxes-packing ml-1"></i> العُهد والمعدات</button>
+                        <button onclick="switchEmpMasterTab('tab-penalties')" class="emp-mtab px-4 py-2 text-slate-500 hover:text-slate-800" data-mtab="tab-penalties"><i class="fas fa-gavel ml-1"></i> الجزاءات والإنذارات</button>
+                    </div>
+
+                    <div id="tab-bio" class="emp-mtab-pane space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                            <div class="p-3 bg-slate-50 rounded-2xl border"><span class="text-slate-400">الرقم القومي:</span> <strong class="font-mono">${emp.nationalId}</strong></div>
+                            <div class="p-3 bg-slate-50 rounded-2xl border"><span class="text-slate-400">تاريخ الانتهاء:</span> <strong class="font-mono text-oss-maroon">${emp.nationalIdExpiry || 'غير محدد'}</strong></div>
+                            <div class="p-3 bg-slate-50 rounded-2xl border"><span class="text-slate-400">تاريخ التعيين:</span> <strong>${emp.joinDate}</strong></div>
+                            <div class="p-3 bg-slate-50 rounded-2xl border"><span class="text-slate-400">تاريخ انتهاء العقد:</span> <strong class="font-mono text-amber-700">${emp.contractExpiry || 'غير محدد'}</strong></div>
+                            <div class="p-3 bg-slate-50 rounded-2xl border"><span class="text-slate-400">الراتب الأساسي:</span> <strong class="font-bold text-emerald-700">${emp.basicSalary.toLocaleString()} ج.م</strong></div>
+                            <div class="p-3 bg-slate-50 rounded-2xl border"><span class="text-slate-400">البدلات الثابتة:</span> <strong class="font-bold text-emerald-700">${emp.allowances.toLocaleString()} ج.م</strong></div>
+                            <div class="p-3 bg-slate-50 rounded-2xl border"><span class="text-slate-400">الحساب البنكي:</span> <strong class="font-mono text-slate-800">${emp.bankAccount || 'نقدي'}</strong></div>
+                            <div class="p-3 bg-slate-50 rounded-2xl border"><span class="text-slate-400">رصيد الإجازات السنوي:</span> <strong>${emp.annualLeaveBalance} يوم اعتيادي | ${emp.casualLeaveBalance || 7} يوم عارضة</strong></div>
+                        </div>
+                    </div>
+
+                    <div id="tab-timeline" class="emp-mtab-pane hidden space-y-4">
+                        <div class="relative border-r-2 border-oss-maroon mr-4 space-y-4 pr-4">
+                            ${(emp.careerTimeline || []).length === 0 ? `<p class="text-xs text-slate-400 italic">لا توجد حوادث وظيفية مسجلة بعد</p>` : emp.careerTimeline.map(tl => `
+                                <div class="relative">
+                                    <div class="absolute -right-6 top-1 w-3 h-3 rounded-full bg-oss-maroon border-2 border-white"></div>
+                                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-extrabold text-slate-900">${tl.title}</span>
+                                            <span class="text-[10px] text-slate-400 font-mono">${tl.date}</span>
+                                        </div>
+                                        <p class="text-slate-600">${tl.description}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div id="tab-custody" class="emp-mtab-pane hidden space-y-4">
+                        <div class="space-y-2 text-xs">
+                            ${(emp.custodyItems || []).length === 0 ? `<p class="text-slate-400 italic">لا تتوفر عُهد عينية مسجلة لهذا الموظف</p>` : emp.custodyItems.map(c => `
+                                <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+                                    <div>
+                                        <div class="font-bold text-slate-900">${c.itemName}</div>
+                                        <div class="text-[10px] text-slate-500 font-mono">سيريال: ${c.serialNo} • تاريخ التسليم: ${c.issueDate}</div>
+                                    </div>
+                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${c.status === 'مسلم للموظف' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                                        ${c.status}
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div id="tab-penalties" class="emp-mtab-pane hidden space-y-4">
+                        <div class="space-y-2 text-xs">
+                            ${(emp.warningsPenalties || []).length === 0 ? `<p class="text-slate-400 italic">سجل الموظف خالي من أي جزاءات إدارية</p>` : emp.warningsPenalties.map(wp => `
+                                <div class="p-3 bg-rose-50 rounded-2xl border border-rose-200 space-y-1">
+                                    <div class="flex items-center justify-between font-bold text-rose-900">
+                                        <span>${wp.type}: ${wp.reason}</span>
+                                        <span class="font-mono text-[10px] text-rose-700">${wp.date}</span>
+                                    </div>
+                                    ${wp.financialDeduction > 0 ? `<div class="text-xs font-bold text-rose-700">خصم مالي بالمرتب: ${wp.financialDeduction} ج.م</div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            backdrop.classList.remove('hidden');
+        }
+
+        function switchEmpMasterTab(tabId) {
+            document.querySelectorAll('.emp-mtab').forEach(b => {
+                if (b.dataset.mtab === tabId) {
+                    b.className = "emp-mtab px-4 py-2 border-b-2 border-oss-maroon font-bold text-oss-maroon";
+                } else {
+                    b.className = "emp-mtab px-4 py-2 font-bold text-slate-500 hover:text-slate-800";
+                }
+            });
+            document.querySelectorAll('.emp-mtab-pane').forEach(p => p.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+        }
+
+        // F. LEAVE APPROVALS WORKFLOW
+        function renderLeaveApprovalsSection(container) {
+            let requests = appState.leaveRequests || [];
+            if (currentUser.role === 'manager') {
+                requests = requests.filter(r => r.governorate === currentUser.governorate);
+            }
+
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                                <i class="fas fa-calendar-check text-oss-maroon"></i> مسار موافقات الإجازات والأذونات وتعارضات الفريق
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-1">الموافقة المزدوجة: اعتماد المدير المباشر ثم التدقيق والتأكيد النهائي من HR</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs">
+                                <thead class="bg-slate-100 text-slate-700 font-bold uppercase">
+                                    <tr>
+                                        <th class="p-3">الموظف</th>
+                                        <th class="p-3">نوع الطلب</th>
+                                        <th class="p-3">الفترة والمدة</th>
+                                        <th class="p-3">السبب وملاحظات</th>
+                                        <th class="p-3">حالة اعتماد الطلب</th>
+                                        <th class="p-3 text-center">إجراءات الاعتماد</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${requests.map(r => `
+                                        <tr>
+                                            <td class="p-3 font-bold text-slate-800">
+                                                <div>${r.empName}</div>
+                                                <div class="text-[10px] text-slate-400 font-mono">${r.governorate} • ${r.empId}</div>
+                                            </td>
+                                            <td class="p-3 font-bold text-oss-navy">
+                                                <span class="px-2 py-1 bg-oss-navy/10 rounded-lg text-oss-navy text-[11px]">${r.type}</span>
+                                            </td>
+                                            <td class="p-3 font-mono">
+                                                <div>من: ${r.startDate} إلى: ${r.endDate}</div>
+                                                <div class="text-[10px] text-amber-700 font-bold">${r.daysCount} يوم</div>
+                                            </td>
+                                            <td class="p-3 text-slate-600">
+                                                <div>${r.reason}</div>
+                                            </td>
+                                            <td class="p-3">
+                                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                                                    r.status === 'مقبول' ? 'bg-emerald-100 text-emerald-800' :
+                                                    (r.status === 'معلق_الموارد_البشرية' ? 'bg-blue-100 text-blue-800' :
+                                                    (r.status === 'معلق_مدير' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'))
+                                                }">
+                                                    ${r.status === 'معلق_مدير' ? 'بانتظار موافقة مدير الفرع' : 
+                                                     (r.status === 'معلق_الموارد_البشرية' ? 'موافق مدير الفرع (بانتظار HR)' : r.status)}
+                                                </span>
+                                            </td>
+                                            <td class="p-3 text-center">
+                                                <div class="flex items-center justify-center gap-1.5">
+                                                    ${(currentUser.role === 'manager' && (r.status === 'معلق_مدير' || r.status === 'معلق')) ? `
+                                                        <button onclick="managerApproveLeave('${r.id}', true)" class="px-3 py-1 bg-emerald-600 text-white rounded-lg text-[11px] font-bold">موافقة الفرع</button>
+                                                        <button onclick="managerApproveLeave('${r.id}', false)" class="px-3 py-1 bg-rose-600 text-white rounded-lg text-[11px] font-bold">رفض</button>
+                                                    ` : ''}
+
+                                                    ${(currentUser.role === 'admin' && (r.status === 'معلق_الموارد_البشرية' || r.status === 'معلق' || r.status === 'معلق_مدير')) ? `
+                                                        <button onclick="hrFinalApproveLeave('${r.id}', true)" class="px-3 py-1 bg-oss-navy text-white rounded-lg text-[11px] font-bold">اعتماد HR نهائي</button>
+                                                        <button onclick="hrFinalApproveLeave('${r.id}', false)" class="px-3 py-1 bg-rose-600 text-white rounded-lg text-[11px] font-bold">رفض نهائي</button>
+                                                    ` : ''}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function managerApproveLeave(reqId, isApproved) {
+            const req = appState.leaveRequests.find(r => r.id === reqId);
+            if (!req) return;
+
+            if (isApproved) {
+                req.status = "معلق_الموارد_البشرية";
+                showToast("تم اعتماد الطلب وتمريره إلى الموارد البشرية!", "success");
+            } else {
+                req.status = "مرفوض من مدير الفرع";
+                showToast("تم رفض طلب الإجازة", "info");
+            }
+
+            await saveEntity("leaveRequests", req);
+            await logAudit(currentUser.name, "موافقة مدير الفرع", `موافقة مدير الفرع على طلب ${req.empName}`);
+            renderView();
+        }
+
+        async function hrFinalApproveLeave(reqId, isApproved) {
+            const req = appState.leaveRequests.find(r => r.id === reqId);
+            if (!req) return;
+
+            if (isApproved) {
+                req.status = "مقبول";
+                const emp = appState.employees.find(e => e.id === req.empId);
+                if (emp) {
+                    if (req.type === 'اعتيادي') emp.annualLeaveBalance = Math.max(0, emp.annualLeaveBalance - req.daysCount);
+                    else if (req.type === 'عارضة') emp.casualLeaveBalance = Math.max(0, emp.casualLeaveBalance - req.daysCount);
+                    await saveEntity("employees", emp);
+                }
+                showToast("تم الاعتماد النهائي للإجازة خصماً من الرصيد الرسمي!", "success");
+            } else {
+                req.status = "مرفوض من الموارد البشرية";
+                showToast("تم رفض الطلب من قبل الموارد البشرية", "info");
+            }
+
+            await saveEntity("leaveRequests", req);
+            await logAudit(currentUser.name, "اعتماد HR نهائي", `الاعتماد النهائي لطلب ${req.empName}`);
+            renderView();
+        }
+
+        // G. PAYROLL ENGINE & PAYSLIPS
+        function renderPayrollEngineSection(container) {
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                                <i class="fas fa-file-invoice-dollar text-emerald-600"></i> مسير الرواتب الشهري والتسويات الشاملة
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-1">تصدير الكشوفات لـ Excel، حساب قسط السلفة، والتسويات المالية المباشرة</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="exportPayrollToExcel()" class="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow flex items-center gap-1.5">
+                                <i class="fas fa-file-excel text-lg"></i> تصدير المسير كملف Excel
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs">
+                                <thead class="bg-oss-navy text-white font-bold uppercase">
+                                    <tr>
+                                        <th class="p-3.5">الكود</th>
+                                        <th class="p-3.5">الموظف</th>
+                                        <th class="p-3.5">الأساسي</th>
+                                        <th class="p-3.5">البدلات</th>
+                                        <th class="p-3.5">الإضافي والتسويات</th>
+                                        <th class="p-3.5">خصم التأخير</th>
+                                        <th class="p-3.5">خصم الغياب</th>
+                                        <th class="p-3.5">صافي المرتب</th>
+                                        <th class="p-3.5 text-center">طباعة</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${appState.employees.map(emp => {
+                                        const p = calculatePayrollForEmployee(emp);
+                                        return `
+                                            <tr class="hover:bg-slate-50 transition">
+                                                <td class="p-3.5 font-mono font-bold text-slate-700">${emp.id}</td>
+                                                <td class="p-3.5 font-bold text-slate-800">${emp.name}</td>
+                                                <td class="p-3.5 font-semibold">${p.basicSalary.toLocaleString()} ج.م</td>
+                                                <td class="p-3.5 text-slate-600">${p.allowances.toLocaleString()} ج.م</td>
+                                                <td class="p-3.5 font-bold text-emerald-600">+${(p.summary.overtimeBonusAmount + p.bonuses).toLocaleString()} ج.م</td>
+                                                <td class="p-3.5 font-bold text-rose-600">-${p.summary.lateDeductionAmount.toLocaleString()} ج.م</td>
+                                                <td class="p-3.5 font-bold text-rose-600">-${p.summary.absenceDeductionAmount.toLocaleString()} ج.م</td>
+                                                <td class="p-3.5 font-black text-oss-maroon text-sm">${p.netSalary.toLocaleString()} ج.م</td>
+                                                <td class="p-3.5 text-center">
+                                                    <button onclick="openPayslipPrintModal('${emp.id}')" class="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[11px] font-bold">
+                                                        <i class="fas fa-print ml-1"></i> مفردات
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function exportPayrollToExcel() {
+            const excelRows = appState.employees.map(emp => {
+                const p = calculatePayrollForEmployee(emp);
+                return {
+                    "الكود الوظيفي": emp.id,
+                    "اسم الموظف": emp.name,
+                    "المحافظة": emp.governorate,
+                    "الراتب الأساسي": p.basicSalary,
+                    "البدلات": p.allowances,
+                    "الإضافي والتسويات الإيجابية": p.summary.overtimeBonusAmount + p.bonuses,
+                    "خصم التأخير": p.summary.lateDeductionAmount,
+                    "خصم الغياب": p.summary.absenceDeductionAmount,
+                    "صافي الراتب المستحق": p.netSalary
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(excelRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "PayrollSummary");
+            XLSX.writeFile(wb, `OSS_Payroll_${new Date().toISOString().slice(0,7)}.xlsx`);
+            showToast("تم تصدير شيت الرواتب كملف Excel بنجاح!", "success");
+        }
+
+        function openPayslipPrintModal(empId) {
+            const emp = appState.employees.find(e => e.id === empId);
+            const p = calculatePayrollForEmployee(emp);
+
+            const backdrop = document.getElementById('modal-backdrop');
+            const content = document.getElementById('modal-content');
+
+            content.innerHTML = `
+                <div class="p-4 border-b border-slate-100 flex items-center justify-between no-print bg-slate-900 text-white rounded-t-3xl">
+                    <h3 class="font-bold text-xs">مفردات مرتب رسمية - OSS Middle East Certification</h3>
+                    <div class="flex items-center gap-2">
+                        <button onclick="window.print()" class="px-4 py-1.5 bg-oss-maroon text-white rounded-lg text-xs font-bold shadow">
+                            <i class="fas fa-print ml-1"></i> طباعة البيان
+                        </button>
+                        <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+
+                <div id="printable-area" class="p-8 space-y-6 bg-white text-slate-800">
+                    <div class="flex justify-between items-center border-b-2 border-oss-maroon pb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-16 h-16 bg-white border-2 border-oss-gold p-1 rounded-xl flex items-center justify-center">
+                                <svg viewBox="0 0 100 100" class="w-full h-full">
+                                    <rect x="2" y="2" width="96" height="96" fill="#822429" stroke="#212561" stroke-width="4" rx="4"/>
+                                    <rect x="6" y="6" width="88" height="88" fill="none" stroke="#ffffff" stroke-width="1.5" rx="2"/>
+                                    <rect x="6" y="6" width="88" height="22" fill="#212561"/>
+                                    <text x="50" y="62" font-family="'Times New Roman', serif" font-weight="bold" font-size="34" fill="#ffffff" text-anchor="middle">oSs</text>
+                                    <text x="50" y="80" font-family="'Times New Roman', serif" font-weight="bold" font-size="11" fill="#ffffff" text-anchor="middle">Middle East</text>
+                                    <text x="50" y="90" font-family="'Times New Roman', serif" font-style="italic" font-size="7" fill="#C59B27" text-anchor="middle">Certification</text>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="font-black text-xl text-oss-navy">${appState.settings?.companyName || DEFAULT_SETTINGS.companyName}</h2>
+                                <p class="text-xs text-oss-maroon font-bold">بيان مفردات المرتب الشهري الرسمي (Salary Payslip)</p>
+                            </div>
+                        </div>
+                        <div class="text-left text-xs font-mono text-slate-500">
+                            <p>التاريخ: ${new Date().toISOString().slice(0,10)}</p>
+                            <p>الفرع: ${emp.governorate}</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl text-xs border border-slate-200">
+                        <div><span class="text-slate-400">اسم الموظف:</span> <strong class="text-slate-800 font-bold">${emp.name}</strong></div>
+                        <div><span class="text-slate-400">الكود الوظيفي:</span> <strong class="font-mono text-slate-800">${emp.id}</strong></div>
+                        <div><span class="text-slate-400">المسمى الوظيفي:</span> <strong class="text-slate-800">${emp.jobTitle}</strong></div>
+                        <div><span class="text-slate-400">الحساب البنكي:</span> <strong class="font-mono text-slate-800">${emp.bankAccount || 'نقدي'}</strong></div>
+                    </div>
+
+                    <table class="w-full text-xs text-right border-collapse">
+                        <thead>
+                            <tr class="bg-oss-navy text-white font-bold border-b">
+                                <th class="p-3">بيان بنود الاستحقاقات / الاستقطاعات</th>
+                                <th class="p-3 text-left">المبلغ (ج.م)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr><td class="p-2.5">الراتب الأساسي الشهري</td><td class="p-2.5 text-left font-bold">${p.basicSalary.toLocaleString()}</td></tr>
+                            <tr><td class="p-2.5">البدلات والحوافز الثابتة</td><td class="p-2.5 text-left font-bold text-emerald-600">+${p.allowances.toLocaleString()}</td></tr>
+                            <tr><td class="p-2.5">مكافأة الإضافي والتسويات الإيجابية</td><td class="p-2.5 text-left font-bold text-emerald-600">+${(p.summary.overtimeBonusAmount + p.bonuses).toLocaleString()}</td></tr>
+                            <tr><td class="p-2.5">خصم التأخيرات (${p.summary.excessLateMins} دقيقة بعد السماح)</td><td class="p-2.5 text-left font-bold text-rose-600">-${p.summary.lateDeductionAmount.toLocaleString()}</td></tr>
+                            <tr><td class="p-2.5">خصم الغياب بدون عذر (${p.summary.unexcusedAbsenceDays} يوم)</td><td class="p-2.5 text-left font-bold text-rose-600">-${p.summary.absenceDeductionAmount.toLocaleString()}</td></tr>
+                            <tr class="bg-oss-maroon/10 font-black text-sm">
+                                <td class="p-3 text-oss-navy">صافي الراتب المستحق للصرف</td>
+                                <td class="p-3 text-left text-oss-maroon font-black">${p.netSalary.toLocaleString()} ج.م</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="pt-8 border-t border-slate-200 grid grid-cols-3 text-center text-xs text-slate-600">
+                        <div><p class="font-bold mb-8">${appState.settings?.signatureHR || DEFAULT_SETTINGS.signatureHR}</p><p>........................................</p></div>
+                        <div><p class="font-bold mb-8">${appState.settings?.signatureFinance || DEFAULT_SETTINGS.signatureFinance}</p><p>........................................</p></div>
+                        <div><p class="font-bold mb-8">${appState.settings?.signatureGM || DEFAULT_SETTINGS.signatureGM}</p><p>........................................</p></div>
+                    </div>
+
+                    <div class="text-center text-[10px] text-slate-400 border-t pt-3">
+                        <p>${appState.settings?.footerPrintText || DEFAULT_SETTINGS.footerPrintText}</p>
+                    </div>
+                </div>
+            `;
+            backdrop.classList.remove('hidden');
+        }
+
+        // H. ACCOUNTS, CMS, AUDIT LOGS, PROFILE SECTIONS
+        function renderAccountsAndRBACSection(container) {
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                        <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                            <i class="fas fa-user-lock text-oss-maroon"></i> إدارة الحسابات والباسوردات ومصفوفة الصلاحيات
+                        </h3>
+                    </div>
+
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs">
+                                <thead class="bg-slate-100 text-slate-700 font-bold uppercase">
+                                    <tr>
+                                        <th class="p-3">الموظف</th>
+                                        <th class="p-3">اسم المستخدم</th>
+                                        <th class="p-3">الصلاحية / الدور</th>
+                                        <th class="p-3 text-center">التحكم</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${appState.employees.map(emp => `
+                                        <tr>
+                                            <td class="p-3 font-bold text-slate-800">${emp.name} (${emp.id})</td>
+                                            <td class="p-3 font-mono font-bold text-oss-navy text-right">${emp.username}</td>
+                                            <td class="p-3 font-bold">${emp.role}</td>
+                                            <td class="p-3 text-center">
+                                                <button onclick="openEmployeeEditModal('${emp.id}')" class="px-3 py-1 bg-slate-800 text-white rounded-lg text-[11px] font-bold">تعديل الحساب</button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCMSCustomizerSection(container) {
+            const settings = appState.settings || DEFAULT_SETTINGS;
+            container.innerHTML = `
+                <div class="space-y-6 max-w-4xl mx-auto">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                        <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                            <i class="fas fa-pen-to-square text-oss-maroon"></i> محرر النصوص وتخصيص الواجهة والتوقيعات (CMS)
+                        </h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">اسم المؤسسة / الشركة</label>
+                            <input type="text" id="cms-company" value="${settings.companyName}" class="w-full p-2.5 border rounded-xl text-xs font-bold">
+                        </div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">توقيع HR</label>
+                                <input type="text" id="cms-hr" value="${settings.signatureHR}" class="w-full p-2.5 border rounded-xl text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">توقيع المالية</label>
+                                <input type="text" id="cms-fin" value="${settings.signatureFinance}" class="w-full p-2.5 border rounded-xl text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">توقيع المدير العام</label>
+                                <input type="text" id="cms-gm" value="${settings.signatureGM}" class="w-full p-2.5 border rounded-xl text-xs">
+                            </div>
+                        </div>
+                        <div class="pt-4 flex justify-end">
+                            <button onclick="saveCMSCustomizerSettings()" class="px-6 py-2.5 bg-oss-maroon text-white font-bold text-xs rounded-xl shadow">حفظ التغييرات</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function saveCMSCustomizerSettings() {
+            if (!appState.settings) appState.settings = { ...DEFAULT_SETTINGS };
+            appState.settings.companyName = document.getElementById('cms-company').value.trim();
+            appState.settings.signatureHR = document.getElementById('cms-hr').value.trim();
+            appState.settings.signatureFinance = document.getElementById('cms-fin').value.trim();
+            appState.settings.signatureGM = document.getElementById('cms-gm').value.trim();
+
+            await saveEntity("settings", appState.settings);
+            updateBrandingUI();
+            showToast("تم تحديث النصوص والتوقيعات الرسمية بنجاح!", "success");
+        }
+
+        function renderAuditLogsSection(container) {
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                        <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                            <i class="fas fa-shield-halved text-oss-navy"></i> سجل الرقابة والتدقيق الأمني وشؤون العاملين (Audit Trail)
+                        </h3>
+                    </div>
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs">
+                                <thead class="bg-slate-100 text-slate-700 font-bold">
+                                    <tr>
+                                        <th class="p-3">الوقت</th>
+                                        <th class="p-3">المستخدم</th>
+                                        <th class="p-3">الإجراء</th>
+                                        <th class="p-3">التفاصيل</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${(appState.auditLogs || []).map(a => `
+                                        <tr>
+                                            <td class="p-3 font-mono text-slate-500">${a.timestamp}</td>
+                                            <td class="p-3 font-bold text-slate-800">${a.user}</td>
+                                            <td class="p-3"><span class="px-2 py-0.5 bg-oss-navy/10 text-oss-navy font-bold rounded">${a.action}</span></td>
+                                            <td class="p-3 text-slate-600">${a.details}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMyProfileSection(container) {
+            const sum = calculateEmployeeAttendanceSummary(currentUser.id);
+            container.innerHTML = `
+                <div class="space-y-6 max-w-4xl mx-auto">
+                    <div class="bg-gradient-to-r from-oss-navy via-slate-900 to-oss-maroon text-white p-6 rounded-3xl shadow-xl border-b-4 border-oss-gold">
+                        <h3 class="text-xl font-black">مرحباً، ${currentUser.name}</h3>
+                        <p class="text-xs text-oss-gold font-bold mt-1">${currentUser.jobTitle} • فرع ${currentUser.governorate}</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-3">
+                        <h4 class="font-black text-sm text-slate-800 flex items-center justify-between">
+                            <span><i class="fas fa-clock text-oss-maroon"></i> بنك سماح التأخير الشهري (240 دقيقة)</span>
+                            <span class="text-oss-navy font-mono">${sum.remainingGrace} دقيقة متبقية</span>
+                        </h4>
+                        <div class="w-full bg-slate-200 h-4 rounded-full overflow-hidden">
+                            <div class="bg-oss-maroon h-full transition-all" style="width: ${(sum.consumedGrace / 240)*100}%"></div>
+                        </div>
+                        <p class="text-[11px] text-slate-500">تم استهلاك ${sum.consumedGrace} دقيقة هذا الشهر.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderEmpLeaveRequestSection(container) {
+            container.innerHTML = `
+                <div class="space-y-6 max-w-2xl mx-auto">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                        <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                            <i class="fas fa-paper-plane text-oss-maroon"></i> تقديم طلب إجازة أو مأمورية عمل
+                        </h3>
+                    </div>
+                    <form onsubmit="submitEmpLeaveForm(event)" class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">نوع الإجازة / الطلب</label>
+                            <select id="lq-type" class="w-full p-2.5 border rounded-xl text-xs font-bold">
+                                <option value="اعتيادي">إجازة اعتيادية سنوية</option>
+                                <option value="عارضة">إجازة عارضة طارئة</option>
+                                <option value="مرضي">إجازة مرضية (تقرير طبي)</option>
+                                <option value="مأمورية خارجية">مأمورية عمل خارجية</option>
+                                <option value="إذن ساعتين">إذن تأخير/انصراف ساعتين</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">من تاريخ</label>
+                                <input type="date" id="lq-start" required class="w-full p-2.5 border rounded-xl text-xs font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">إلى تاريخ</label>
+                                <input type="date" id="lq-end" required class="w-full p-2.5 border rounded-xl text-xs font-mono">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">السبب والتبرير</label>
+                            <textarea id="lq-reason" required rows="3" class="w-full p-2.5 border rounded-xl text-xs" placeholder="اكتب سبب الطلب..."></textarea>
+                        </div>
+                        <div class="pt-2 flex justify-end">
+                            <button type="submit" class="px-6 py-2.5 bg-oss-maroon text-white font-extrabold text-xs rounded-xl shadow">إرسال الطلب للمدير المباشر</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+        }
+
+        async function submitEmpLeaveForm(e) {
+            e.preventDefault();
+            const type = document.getElementById('lq-type').value;
+            const startDate = document.getElementById('lq-start').value;
+            const endDate = document.getElementById('lq-end').value;
+            const reason = document.getElementById('lq-reason').value.trim();
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const diffTime = Math.abs(end - start);
+            const daysCount = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+            const reqObj = {
+                id: "REQ-" + Date.now(),
+                empId: currentUser.id,
+                empName: currentUser.name,
+                departmentId: currentUser.departmentId,
+                governorate: currentUser.governorate,
+                managerId: currentUser.managerId,
+                type, startDate, endDate, daysCount, reason,
+                status: "معلق_مدير",
+                requestDate: new Date().toISOString().slice(0,10)
+            };
+
+            await saveEntity("leaveRequests", reqObj);
+            await logAudit(currentUser.name, "تقديم طلب إجازة", `تقديم طلب إجازة (${type}) لمسار الموافقات`);
+            showToast("تم تقديم الطلب وإرساله إلى مدير الفرع بنجاح!", "success");
+            switchTab('emp_payslip_logs');
+        }
+
+        function renderEmpPayslipLogsSection(container) {
+            const p = calculatePayrollForEmployee(currentUser);
+            container.innerHTML = `
+                <div class="space-y-6 max-w-4xl mx-auto">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-black text-slate-800">بيان مرتبك ومفرداتك لشهر الجاري</h3>
+                        </div>
+                        <button onclick="openPayslipPrintModal('${currentUser.id}')" class="px-4 py-2 bg-oss-navy text-white font-bold text-xs rounded-xl shadow">
+                            <i class="fas fa-print ml-1"></i> طباعة كشف مفردات المرتب
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeModal() {
+            document.getElementById('modal-backdrop').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
